@@ -26,6 +26,7 @@ endef
 
 define Package/antiblock/install
 	$(CP) ./files/* $(1)/
+	chmod +x $(1)/etc/init.d/antiblock
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/antiblock $(1)/usr/bin/
