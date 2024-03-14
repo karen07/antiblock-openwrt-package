@@ -7,7 +7,7 @@ PKG_LICENSE:=GPL-3.0-or-later
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/karen07/antiblock
-PKG_SOURCE_VERSION:=2b8324bf624c27077c089327136ce34d1106c3d0
+PKG_SOURCE_VERSION:=ae6ed14093334e8249f7efb10cd1879a07d1a81e
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -23,6 +23,11 @@ endef
 define Package/antiblock/description
 	DNS proxy add blocked domains ip address to route table.
 endef
+
+#define Build/Prepare
+#	mkdir -p $(PKG_BUILD_DIR)
+#	$(CP) ../antiblock/* $(PKG_BUILD_DIR)/
+#endef
 
 define Package/antiblock/install
 	$(CP) ./files/* $(1)/

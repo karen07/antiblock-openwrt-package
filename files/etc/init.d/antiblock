@@ -11,5 +11,7 @@ start_service() {
 	procd_set_param command "$PROG"
 	procd_set_param respawn
 	procd_set_param stdout 1
+	procd_append_param command -url https://antifilter.download/list/domains.lst
+	procd_append_param command -file /root/new.txt
 	procd_close_instance
 }
