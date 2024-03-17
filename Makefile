@@ -7,7 +7,7 @@ PKG_LICENSE:=GPL-3.0-or-later
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/karen07/antiblock
-PKG_SOURCE_VERSION:=dd0bcab832f5dba455dd707ec29d98978c04a70b
+PKG_SOURCE_VERSION:=445e909d181a982927a6093a1fd1d65510ff3080
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
