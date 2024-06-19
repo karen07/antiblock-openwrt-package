@@ -7,11 +7,11 @@ PACKET_SRC_PATH=$PACKET_SRC_FOLDER/$PACKET_SRC_NAME
 
 make $PACKET_SRC_PATH/clean
 
-if make $PACKET_SRC_PATH/compile ; then
+if make $PACKET_SRC_PATH/compile; then
 
-    PACKET_PATH=$(find bin | grep antiblock)
+	PACKET_PATH=$(find bin | grep antiblock)
 	PACKET_NAME=$(basename $PACKET_PATH)
-	
+
 	if [ -f "$PACKET_PATH" ]; then
 		scp -O $PACKET_PATH router:~/
 		ssh router opkg remove $PACKET
@@ -20,6 +20,6 @@ if make $PACKET_SRC_PATH/compile ; then
 		echo "Command succeeded"
 	fi
 else
-    make -j1 V=s $PACKET_SRC_PATH/compile
-    echo "Command failed"
+	make -j1 V=s $PACKET_SRC_PATH/compile
+	echo "Command failed"
 fi
