@@ -5,7 +5,7 @@ PKG_VERSION:=1.0.0
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 
-ifeq ("$(wildcard ../antiblock/)", "")
+ifeq ("$(wildcard ../antiblock)", "")
 	PKG_SOURCE_PROTO:=git
 	PKG_SOURCE_URL:=https://github.com/karen07/antiblock
 	PKG_SOURCE_VERSION:=445e909d181a982927a6093a1fd1d65510ff3080
@@ -26,7 +26,7 @@ define Package/antiblock/description
 	DNS proxy add blocked domains ip address to route table.
 endef
 
-ifneq ("$(wildcard ../antiblock/)", "")
+ifneq ("$(wildcard ../antiblock)", "")
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
 	$(CP) ../antiblock/* $(PKG_BUILD_DIR)/
