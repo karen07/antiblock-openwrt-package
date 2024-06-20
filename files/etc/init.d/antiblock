@@ -11,11 +11,13 @@ start_service() {
 	procd_set_param command "$PROG"
 	procd_set_param respawn
 	procd_set_param stdout 1
+
 	procd_append_param command -url https://antifilter.download/list/domains.lst
 	procd_append_param command -file /root/new.txt
 	procd_append_param command -route_IP 10.8.0.5
 	procd_append_param command -DNS_IP 1.1.1.1
 	procd_append_param command -DNS_port 53
 	procd_append_param command -listen_port 5053
+
 	procd_close_instance
 }
