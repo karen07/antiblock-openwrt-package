@@ -39,6 +39,9 @@ define Package/antiblock/install
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/antiblock $(1)/etc/init.d/
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/etc/config/antiblock $(1)/etc/config/
 endef
 
 $(eval $(call BuildPackage,antiblock))
