@@ -7,6 +7,123 @@ USE_PROCD=1
 
 PROG=antiblock
 
+is_server_exists=0
+get_server_from_dnsmasq() {
+	local server=$1
+	local listen_port=$2
+
+	if [[ "$server" == "127.0.0.1#$listen_port" ]]; then
+		is_server_exists=1
+	fi
+}
+dnsmasq_walk_add() {
+	local id=$1
+	local listen_port=$2
+
+	uci set dhcp.$id.noresolv="1"
+	uci set dhcp.$id.rebind_protection="0"
+
+	config_list_foreach $id server get_server_from_dnsmasq $listen_port
+
+	if [[ "$is_server_exists" == "0" ]]; then
+		uci add_list dhcp.$id.server="127.0.0.1#$listen_port"
+	fi
+}
+dnsmasq_walk_del() {
+	local id=$1
+	local listen_port=$2
+
+	uci delete dhcp.$id.noresolv 2>/dev/null
+	uci set dhcp.$id.rebind_protection="1"
+	uci del_list dhcp.$id.server="127.0.0.1#$listen_port"
+}
+
+is_firewall_NAT_exists=0
+get_network() {
+	local network=$1
+
+	if [[ "$network" == "NAT" ]]; then
+		is_firewall_NAT_exists=1
+	fi
+}
+firewall_walk_add() {
+	local id=$1
+	local name
+
+	config_get name $id name
+	if [[ "$name" == "lan" ]]; then
+		config_list_foreach $id network get_network
+		if [[ "$is_firewall_NAT_exists" == "0" ]]; then
+			uci add_list firewall.$id.network='NAT'
+		fi
+	fi
+}
+firewall_walk_del() {
+	local id=$1
+	local name
+
+	config_get name $id name
+	if [[ "$name" == "lan" ]]; then
+		uci del_list firewall.$id.network='NAT'
+	fi
+}
+
+is_network_NAT_exists=0
+network_walk_add() {
+	local network=$1
+
+	if [[ "$network" == "NAT" ]]; then
+		is_network_NAT_exists=1
+	fi
+}
+network_walk_del() {
+	local network=$1
+
+	if [[ "$network" == "NAT" ]]; then
+		uci delete network.NAT
+	fi
+}
+
+is_network_route_exists=0
+network_route_walk_add() {
+	local id=$1
+	local table
+
+	config_get table $id table
+	if [[ "$table" == "2" ]]; then
+		is_network_route_exists=1
+	fi
+}
+network_route_walk_del() {
+	local id=$1
+	local table
+
+	config_get table $id table
+	if [[ "$table" == "2" ]]; then
+		uci delete network.$id
+	fi
+}
+
+is_network_rule_exists=0
+network_rule_walk_add() {
+	local id=$1
+	local lookup
+
+	config_get lookup $id lookup
+	if [[ "$lookup" == "2" ]]; then
+		is_network_rule_exists=1
+	fi
+}
+network_rule_walk_del() {
+	local id=$1
+	local lookup
+
+	config_get lookup $id lookup
+	if [[ "$lookup" == "2" ]]; then
+		uci delete network.$id
+	fi
+}
+
 start_service() {
 	echo "Antiblock start"
 
@@ -42,30 +159,45 @@ start_service() {
 
 	procd_close_instance
 
-	uci add_list dhcp.@dnsmasq[0].noresolv='1'
-	uci set dhcp.@dnsmasq[0].rebind_protection='0'
-	uci add_list dhcp.@dnsmasq[0].server=127.0.0.1#$listen_port
-	
-	uci set network.NAT=interface
-	uci set network.NAT.proto='static'
-	uci set network.NAT.device='antiblock'
-	uci set network.NAT.ipaddr='10.7.1.1'
-	uci set network.NAT.netmask='255.255.0.0'
+	config_load dhcp
+	config_foreach dnsmasq_walk_add dnsmasq $listen_port
 
-	uci add network route
-	uci set network.@route[-1].interface='VPN'
-	uci set network.@route[-1].target='0.0.0.0/0'
-	uci set network.@route[-1].table='2'
+	config_load firewall
+	config_foreach firewall_walk_add zone
 
-	uci add network rule
-	uci set network.@rule[-1].src='10.7.128.0/17'
-	uci set network.@rule[-1].lookup='2'
+	config_load network
+	config_foreach network_walk_add interface
 
-	uci add_list firewall.@zone[0].network='NAT'
+	if [[ "$is_network_NAT_exists" == "0" ]]; then
+		uci set network.NAT=interface
+		uci set network.NAT.proto='static'
+		uci set network.NAT.device='antiblock'
+		uci set network.NAT.ipaddr='10.7.1.1'
+		uci set network.NAT.netmask='255.255.0.0'
+	fi
+
+	config_foreach network_route_walk_add route
+
+	if [[ "$is_network_route_exists" == "0" ]]; then
+		route_id=$(uci add network route)
+		uci set network.$route_id.interface='VPN'
+		uci set network.$route_id.target='0.0.0.0/0'
+		uci set network.$route_id.table='2'
+	fi
+
+	config_foreach network_rule_walk_add rule
+
+	if [[ "$is_network_rule_exists" == "0" ]]; then
+		rule_id=$(uci add network rule)
+		uci set network.$rule_id.src='10.7.128.0/17'
+		uci set network.$rule_id.lookup='2'
+	fi
 
 	uci commit
 
-	/etc/init.d/network restart
+	/etc/init.d/network reload >/dev/null 2>&1
+	/etc/init.d/firewall reload >/dev/null 2>&1
+	/etc/init.d/dnsmasq restart >/dev/null 2>&1
 }
 
 stop_service() {
@@ -77,19 +209,23 @@ stop_service() {
 
 	config_get listen_port args listen_port
 
-	uci del_list dhcp.@dnsmasq[0].noresolv='1'
-	uci set dhcp.@dnsmasq[0].rebind_protection='1'
-	uci del_list dhcp.@dnsmasq[0].server=127.0.0.1#$listen_port
-	
-	uci delete network.@route[1]
-	
-	uci delete network.@rule[1]
-	
-	uci delete network.NAT
-	
-	uci del_list firewall.@zone[0].network='NAT'
+	config_load dhcp
+	config_foreach dnsmasq_walk_del dnsmasq $listen_port
+
+	config_load firewall
+	config_foreach firewall_walk_del zone
+
+	config_load network
+
+	config_foreach network_walk_del interface
+
+	config_foreach network_route_walk_del route
+
+	config_foreach network_rule_walk_del rule
 
 	uci commit
 
-	/etc/init.d/network restart
+	/etc/init.d/network reload >/dev/null 2>&1
+	/etc/init.d/firewall reload >/dev/null 2>&1
+	/etc/init.d/dnsmasq restart >/dev/null 2>&1
 }
