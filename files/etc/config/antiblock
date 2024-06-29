@@ -8,11 +8,9 @@ config antiblock 'args'
 
 	option listen_port '5053'
 
-	option virt_eth_name 'NAT'
-	option virt_eth_net '10.7.0.1/16'
+	option TUN_name 'NAT'
+	option TUN_net '10.7.0.1/16'
 
 	option VPN_name 'VPN'
 
-	option route_table '2'
-
-	option route_IP '10.8.0.5'
+	option route_table '100'

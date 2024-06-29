@@ -39,7 +39,7 @@ is_firewall_rule_exists=0
 get_network() {
 	local network=$1
 
-	if [[ "$network" == "$virt_eth_name" ]]; then
+	if [[ "$network" == "$TUN_name" ]]; then
 		is_firewall_rule_exists=1
 	fi
 }
@@ -51,7 +51,7 @@ firewall_walk_add() {
 	if [[ "$name" == "lan" ]]; then
 		config_list_foreach $id network get_network
 		if [[ "$is_firewall_rule_exists" == "0" ]]; then
-			uci add_list firewall.$id.network="$virt_eth_name"
+			uci add_list firewall.$id.network="$TUN_name"
 		fi
 	fi
 }
@@ -61,7 +61,7 @@ firewall_walk_del() {
 
 	config_get name $id name
 	if [[ "$name" == "lan" ]]; then
-		uci del_list firewall.$id.network="$virt_eth_name"
+		uci del_list firewall.$id.network="$TUN_name"
 	fi
 }
 
@@ -69,15 +69,15 @@ is_network_interface_exists=0
 network_walk_add() {
 	local network=$1
 
-	if [[ "$network" == "$virt_eth_name" ]]; then
+	if [[ "$network" == "$TUN_name" ]]; then
 		is_network_interface_exists=1
 	fi
 }
 network_walk_del() {
 	local network=$1
 
-	if [[ "$network" == "$virt_eth_name" ]]; then
-		uci delete network.$virt_eth_name
+	if [[ "$network" == "$TUN_name" ]]; then
+		uci delete network.$TUN_name
 	fi
 }
 
@@ -153,7 +153,7 @@ start_service() {
 	local route_IP
 	local DNS_IP
 	local DNS_port
-	local virt_eth_net
+	local TUN_net
 	local VPN_name
 
 	config_get url args url
@@ -162,32 +162,32 @@ start_service() {
 	config_get DNS_IP args DNS_IP
 	config_get DNS_port args DNS_port
 	config_get listen_port args listen_port
-	config_get virt_eth_name args virt_eth_name
-	config_get virt_eth_net args virt_eth_net
+	config_get TUN_name args TUN_name
+	config_get TUN_net args TUN_net
 	config_get VPN_name args VPN_name
 	config_get route_table args route_table
 
-	ipcalc=$(/bin/ipcalc.sh $virt_eth_net)
+	ipcalc=$(/bin/ipcalc.sh $TUN_net)
 
-	virt_eth_ip=$(echo "$ipcalc" | grep IP | cut -d '=' -f2-)
-	virt_eth_subnet=$(echo "$ipcalc" | grep NETMASK | cut -d '=' -f2-)
-	virt_eth_network=$(echo "$ipcalc" | grep NETWORK | cut -d '=' -f2-)
-	virt_eth_prefix=$(echo "$ipcalc" | grep PREFIX | cut -d '=' -f2-)
+	TUN_ip=$(echo "$ipcalc" | grep IP | cut -d '=' -f2-)
+	TUN_subnet=$(echo "$ipcalc" | grep NETMASK | cut -d '=' -f2-)
+	TUN_network=$(echo "$ipcalc" | grep NETWORK | cut -d '=' -f2-)
+	TUN_prefix=$(echo "$ipcalc" | grep PREFIX | cut -d '=' -f2-)
 
-	virt_eth_sub_prefix=$(($virt_eth_prefix + 1))
+	TUN_sub_prefix=$(($TUN_prefix + 1))
 
-	virt_eth_network_dec=$(ip2dec $virt_eth_network)
-	virt_eth_network_dec=$(($virt_eth_network_dec + 1))
+	TUN_network_dec=$(ip2dec $TUN_network)
+	TUN_network_dec=$(($TUN_network_dec + 1))
 
-	ipcalc_dec=$(/bin/ipcalc.sh $virt_eth_network_dec)
+	ipcalc_dec=$(/bin/ipcalc.sh $TUN_network_dec)
 
-	virt_eth_start_ip=$(echo "$ipcalc_dec" | grep IP | cut -d '=' -f2-)
+	TUN_start_ip=$(echo "$ipcalc_dec" | grep IP | cut -d '=' -f2-)
 
-	virt_eth_network_dec=$(ip_bit_revers $virt_eth_network_dec $virt_eth_sub_prefix)
+	TUN_network_dec=$(ip_bit_revers $TUN_network_dec $TUN_sub_prefix)
 
-	ipcalc_dec=$(/bin/ipcalc.sh $virt_eth_network_dec)
+	ipcalc_dec=$(/bin/ipcalc.sh $TUN_network_dec)
 
-	virt_eth_sub_ip=$(echo "$ipcalc_dec" | grep IP | cut -d '=' -f2-)
+	TUN_sub_ip=$(echo "$ipcalc_dec" | grep IP | cut -d '=' -f2-)
 
 	procd_open_instance
 
@@ -198,10 +198,11 @@ start_service() {
 
 	procd_append_param command -url "$url"
 	procd_append_param command -file "$file"
-	procd_append_param command -route_IP "$route_IP"
 	procd_append_param command -DNS_IP "$DNS_IP"
 	procd_append_param command -DNS_port "$DNS_port"
 	procd_append_param command -listen_port "$listen_port"
+	procd_append_param command -TUN_net "$TUN_start_ip/$TUN_sub_prefix"
+	procd_append_param command -TUN_name "$TUN_name"
 
 	procd_close_instance
 
@@ -214,11 +215,11 @@ start_service() {
 	config_load network
 	config_foreach network_walk_add interface
 	if [[ "$is_network_interface_exists" == "0" ]]; then
-		uci set network.$virt_eth_name=interface
-		uci set network.$virt_eth_name.proto="static"
-		uci set network.$virt_eth_name.device="$virt_eth_name"
-		uci set network.$virt_eth_name.ipaddr="$virt_eth_start_ip"
-		uci set network.$virt_eth_name.netmask="$virt_eth_subnet"
+		uci set network.$TUN_name=interface
+		uci set network.$TUN_name.proto="static"
+		uci set network.$TUN_name.device="$TUN_name"
+		uci set network.$TUN_name.ipaddr="$TUN_start_ip"
+		uci set network.$TUN_name.netmask="$TUN_subnet"
 	fi
 
 	config_foreach network_route_walk_add route
@@ -232,7 +233,7 @@ start_service() {
 	config_foreach network_rule_walk_add rule
 	if [[ "$is_network_rule_exists" == "0" ]]; then
 		local rule_id=$(uci add network rule)
-		uci set network.$rule_id.src="$virt_eth_sub_ip/$virt_eth_sub_prefix"
+		uci set network.$rule_id.src="$TUN_sub_ip/$TUN_sub_prefix"
 		uci set network.$rule_id.lookup="$route_table"
 	fi
 
@@ -253,7 +254,7 @@ stop_service() {
 	local route_IP
 	local DNS_IP
 	local DNS_port
-	local virt_eth_net
+	local TUN_net
 	local VPN_name
 
 	config_get url args url
@@ -262,8 +263,8 @@ stop_service() {
 	config_get DNS_IP args DNS_IP
 	config_get DNS_port args DNS_port
 	config_get listen_port args listen_port
-	config_get virt_eth_name args virt_eth_name
-	config_get virt_eth_net args virt_eth_net
+	config_get TUN_name args TUN_name
+	config_get TUN_net args TUN_net
 	config_get VPN_name args VPN_name
 	config_get route_table args route_table
 
