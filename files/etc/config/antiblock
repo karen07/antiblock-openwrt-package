@@ -2,10 +2,17 @@
 config antiblock 'args'
 	option url 'https://antifilter.download/list/domains.lst'
 	option file '/root/my_urls.txt'
+
 	option DNS_IP '1.1.1.1'
 	option DNS_port '53'
+
 	option listen_port '5053'
+
 	option virt_eth_name 'NAT'
 	option virt_eth_net '10.7.0.1/16'
+
+	option VPN_name 'VPN'
+
+	option route_table '2'
 
 	option route_IP '10.8.0.5'

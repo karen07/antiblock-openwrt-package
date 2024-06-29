@@ -10,7 +10,6 @@ PROG=antiblock
 is_server_exists=0
 get_server_from_dnsmasq() {
 	local server=$1
-	local listen_port=$2
 
 	if [[ "$server" == "127.0.0.1#$listen_port" ]]; then
 		is_server_exists=1
@@ -18,12 +17,11 @@ get_server_from_dnsmasq() {
 }
 dnsmasq_walk_add() {
 	local id=$1
-	local listen_port=$2
 
 	uci set dhcp.$id.noresolv="1"
 	uci set dhcp.$id.rebind_protection="0"
 
-	config_list_foreach $id server get_server_from_dnsmasq $listen_port
+	config_list_foreach $id server get_server_from_dnsmasq
 
 	if [[ "$is_server_exists" == "0" ]]; then
 		uci add_list dhcp.$id.server="127.0.0.1#$listen_port"
@@ -31,19 +29,18 @@ dnsmasq_walk_add() {
 }
 dnsmasq_walk_del() {
 	local id=$1
-	local listen_port=$2
 
 	uci delete dhcp.$id.noresolv 2>/dev/null
 	uci set dhcp.$id.rebind_protection="1"
 	uci del_list dhcp.$id.server="127.0.0.1#$listen_port"
 }
 
-is_firewall_NAT_exists=0
+is_firewall_rule_exists=0
 get_network() {
 	local network=$1
 
-	if [[ "$network" == "NAT" ]]; then
-		is_firewall_NAT_exists=1
+	if [[ "$network" == "$virt_eth_name" ]]; then
+		is_firewall_rule_exists=1
 	fi
 }
 firewall_walk_add() {
@@ -53,8 +50,8 @@ firewall_walk_add() {
 	config_get name $id name
 	if [[ "$name" == "lan" ]]; then
 		config_list_foreach $id network get_network
-		if [[ "$is_firewall_NAT_exists" == "0" ]]; then
-			uci add_list firewall.$id.network="NAT"
+		if [[ "$is_firewall_rule_exists" == "0" ]]; then
+			uci add_list firewall.$id.network="$virt_eth_name"
 		fi
 	fi
 }
@@ -64,23 +61,23 @@ firewall_walk_del() {
 
 	config_get name $id name
 	if [[ "$name" == "lan" ]]; then
-		uci del_list firewall.$id.network="NAT"
+		uci del_list firewall.$id.network="$virt_eth_name"
 	fi
 }
 
-is_network_NAT_exists=0
+is_network_interface_exists=0
 network_walk_add() {
 	local network=$1
 
-	if [[ "$network" == "NAT" ]]; then
-		is_network_NAT_exists=1
+	if [[ "$network" == "$virt_eth_name" ]]; then
+		is_network_interface_exists=1
 	fi
 }
 network_walk_del() {
 	local network=$1
 
-	if [[ "$network" == "NAT" ]]; then
-		uci delete network.NAT
+	if [[ "$network" == "$virt_eth_name" ]]; then
+		uci delete network.$virt_eth_name
 	fi
 }
 
@@ -90,7 +87,7 @@ network_route_walk_add() {
 	local table
 
 	config_get table $id table
-	if [[ "$table" == "2" ]]; then
+	if [[ "$table" == "$route_table" ]]; then
 		is_network_route_exists=1
 	fi
 }
@@ -99,7 +96,7 @@ network_route_walk_del() {
 	local table
 
 	config_get table $id table
-	if [[ "$table" == "2" ]]; then
+	if [[ "$table" == "$route_table" ]]; then
 		uci delete network.$id
 	fi
 }
@@ -110,7 +107,7 @@ network_rule_walk_add() {
 	local lookup
 
 	config_get lookup $id lookup
-	if [[ "$lookup" == "2" ]]; then
+	if [[ "$lookup" == "$route_table" ]]; then
 		is_network_rule_exists=1
 	fi
 }
@@ -119,7 +116,7 @@ network_rule_walk_del() {
 	local lookup
 
 	config_get lookup $id lookup
-	if [[ "$lookup" == "2" ]]; then
+	if [[ "$lookup" == "$route_table" ]]; then
 		uci delete network.$id
 	fi
 }
@@ -138,9 +135,8 @@ ip2dec() {
 }
 
 ip_bit_revers() {
-	local mask_prefix mask ip_dec
-	ip_dec=$1
-	mask_prefix=$2
+	local ip_dec=$1
+	local mask_prefix=$2
 
 	mask=$((2 ** (32 - $mask_prefix)))
 
@@ -157,9 +153,8 @@ start_service() {
 	local route_IP
 	local DNS_IP
 	local DNS_port
-	local listen_port
-	local virt_eth_name
 	local virt_eth_net
+	local VPN_name
 
 	config_get url args url
 	config_get file args file
@@ -169,6 +164,8 @@ start_service() {
 	config_get listen_port args listen_port
 	config_get virt_eth_name args virt_eth_name
 	config_get virt_eth_net args virt_eth_net
+	config_get VPN_name args VPN_name
+	config_get route_table args route_table
 
 	ipcalc=$(/bin/ipcalc.sh $virt_eth_net)
 
@@ -209,37 +206,34 @@ start_service() {
 	procd_close_instance
 
 	config_load dhcp
-	config_foreach dnsmasq_walk_add dnsmasq $listen_port
+	config_foreach dnsmasq_walk_add dnsmasq
 
 	config_load firewall
 	config_foreach firewall_walk_add zone
 
 	config_load network
 	config_foreach network_walk_add interface
-
-	if [[ "$is_network_NAT_exists" == "0" ]]; then
-		uci set network.NAT=interface
-		uci set network.NAT.proto="static"
-		uci set network.NAT.device="antiblock"
-		uci set network.NAT.ipaddr="$virt_eth_start_ip"
-		uci set network.NAT.netmask="$virt_eth_subnet"
+	if [[ "$is_network_interface_exists" == "0" ]]; then
+		uci set network.$virt_eth_name=interface
+		uci set network.$virt_eth_name.proto="static"
+		uci set network.$virt_eth_name.device="$virt_eth_name"
+		uci set network.$virt_eth_name.ipaddr="$virt_eth_start_ip"
+		uci set network.$virt_eth_name.netmask="$virt_eth_subnet"
 	fi
 
 	config_foreach network_route_walk_add route
-
 	if [[ "$is_network_route_exists" == "0" ]]; then
-		route_id=$(uci add network route)
-		uci set network.$route_id.interface="VPN"
+		local route_id=$(uci add network route)
+		uci set network.$route_id.interface="$VPN_name"
 		uci set network.$route_id.target="0.0.0.0/0"
-		uci set network.$route_id.table="2"
+		uci set network.$route_id.table="$route_table"
 	fi
 
 	config_foreach network_rule_walk_add rule
-
 	if [[ "$is_network_rule_exists" == "0" ]]; then
-		rule_id=$(uci add network rule)
+		local rule_id=$(uci add network rule)
 		uci set network.$rule_id.src="$virt_eth_sub_ip/$virt_eth_sub_prefix"
-		uci set network.$rule_id.lookup="2"
+		uci set network.$rule_id.lookup="$route_table"
 	fi
 
 	uci commit
@@ -254,22 +248,34 @@ stop_service() {
 
 	config_load "$PROG"
 
-	local listen_port
+	local url
+	local file
+	local route_IP
+	local DNS_IP
+	local DNS_port
+	local virt_eth_net
+	local VPN_name
 
+	config_get url args url
+	config_get file args file
+	config_get route_IP args route_IP
+	config_get DNS_IP args DNS_IP
+	config_get DNS_port args DNS_port
 	config_get listen_port args listen_port
+	config_get virt_eth_name args virt_eth_name
+	config_get virt_eth_net args virt_eth_net
+	config_get VPN_name args VPN_name
+	config_get route_table args route_table
 
 	config_load dhcp
-	config_foreach dnsmasq_walk_del dnsmasq $listen_port
+	config_foreach dnsmasq_walk_del dnsmasq
 
 	config_load firewall
 	config_foreach firewall_walk_del zone
 
 	config_load network
-
 	config_foreach network_walk_del interface
-
 	config_foreach network_route_walk_del route
-
 	config_foreach network_rule_walk_del rule
 
 	uci commit
