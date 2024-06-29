@@ -54,7 +54,7 @@ firewall_walk_add() {
 	if [[ "$name" == "lan" ]]; then
 		config_list_foreach $id network get_network
 		if [[ "$is_firewall_NAT_exists" == "0" ]]; then
-			uci add_list firewall.$id.network='NAT'
+			uci add_list firewall.$id.network="NAT"
 		fi
 	fi
 }
@@ -64,7 +64,7 @@ firewall_walk_del() {
 
 	config_get name $id name
 	if [[ "$name" == "lan" ]]; then
-		uci del_list firewall.$id.network='NAT'
+		uci del_list firewall.$id.network="NAT"
 	fi
 }
 
@@ -124,24 +124,73 @@ network_rule_walk_del() {
 	fi
 }
 
+ip2dec() {
+	local a b c d ip ip_dec
+	ip=$1
+
+	a=$(echo $ip | cut -d '.' -f1)
+	b=$(echo $ip | cut -d '.' -f2)
+	c=$(echo $ip | cut -d '.' -f3)
+	d=$(echo $ip | cut -d '.' -f4)
+
+	ip_dec=$(($a * 256 ** 3 + $b * 256 ** 2 + $c * 256 + $d))
+	echo $ip_dec
+}
+
+ip_bit_revers() {
+	local mask_prefix mask ip_dec
+	ip_dec=$1
+	mask_prefix=$2
+
+	mask=$((2 ** (32 - $mask_prefix)))
+
+	echo $((ip_dec ^ mask))
+}
+
 start_service() {
 	echo "Antiblock start"
 
 	config_load "$PROG"
 
 	local url
-	local file1
+	local file
 	local route_IP
 	local DNS_IP
 	local DNS_port
 	local listen_port
+	local virt_eth_name
+	local virt_eth_net
 
 	config_get url args url
-	config_get file1 args file
+	config_get file args file
 	config_get route_IP args route_IP
 	config_get DNS_IP args DNS_IP
 	config_get DNS_port args DNS_port
 	config_get listen_port args listen_port
+	config_get virt_eth_name args virt_eth_name
+	config_get virt_eth_net args virt_eth_net
+
+	ipcalc=$(/bin/ipcalc.sh $virt_eth_net)
+
+	virt_eth_ip=$(echo "$ipcalc" | grep IP | cut -d '=' -f2-)
+	virt_eth_subnet=$(echo "$ipcalc" | grep NETMASK | cut -d '=' -f2-)
+	virt_eth_network=$(echo "$ipcalc" | grep NETWORK | cut -d '=' -f2-)
+	virt_eth_prefix=$(echo "$ipcalc" | grep PREFIX | cut -d '=' -f2-)
+
+	virt_eth_sub_prefix=$(($virt_eth_prefix + 1))
+
+	virt_eth_network_dec=$(ip2dec $virt_eth_network)
+	virt_eth_network_dec=$(($virt_eth_network_dec + 1))
+
+	ipcalc_dec=$(/bin/ipcalc.sh $virt_eth_network_dec)
+
+	virt_eth_start_ip=$(echo "$ipcalc_dec" | grep IP | cut -d '=' -f2-)
+
+	virt_eth_network_dec=$(ip_bit_revers $virt_eth_network_dec $virt_eth_sub_prefix)
+
+	ipcalc_dec=$(/bin/ipcalc.sh $virt_eth_network_dec)
+
+	virt_eth_sub_ip=$(echo "$ipcalc_dec" | grep IP | cut -d '=' -f2-)
 
 	procd_open_instance
 
@@ -151,7 +200,7 @@ start_service() {
 	procd_set_param stdout 1
 
 	procd_append_param command -url "$url"
-	procd_append_param command -file "$file1"
+	procd_append_param command -file "$file"
 	procd_append_param command -route_IP "$route_IP"
 	procd_append_param command -DNS_IP "$DNS_IP"
 	procd_append_param command -DNS_port "$DNS_port"
@@ -170,27 +219,27 @@ start_service() {
 
 	if [[ "$is_network_NAT_exists" == "0" ]]; then
 		uci set network.NAT=interface
-		uci set network.NAT.proto='static'
-		uci set network.NAT.device='antiblock'
-		uci set network.NAT.ipaddr='10.7.1.1'
-		uci set network.NAT.netmask='255.255.0.0'
+		uci set network.NAT.proto="static"
+		uci set network.NAT.device="antiblock"
+		uci set network.NAT.ipaddr="$virt_eth_start_ip"
+		uci set network.NAT.netmask="$virt_eth_subnet"
 	fi
 
 	config_foreach network_route_walk_add route
 
 	if [[ "$is_network_route_exists" == "0" ]]; then
 		route_id=$(uci add network route)
-		uci set network.$route_id.interface='VPN'
-		uci set network.$route_id.target='0.0.0.0/0'
-		uci set network.$route_id.table='2'
+		uci set network.$route_id.interface="VPN"
+		uci set network.$route_id.target="0.0.0.0/0"
+		uci set network.$route_id.table="2"
 	fi
 
 	config_foreach network_rule_walk_add rule
 
 	if [[ "$is_network_rule_exists" == "0" ]]; then
 		rule_id=$(uci add network rule)
-		uci set network.$rule_id.src='10.7.128.0/17'
-		uci set network.$rule_id.lookup='2'
+		uci set network.$rule_id.src="$virt_eth_sub_ip/$virt_eth_sub_prefix"
+		uci set network.$rule_id.lookup="2"
 	fi
 
 	uci commit
