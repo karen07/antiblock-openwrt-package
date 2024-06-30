@@ -201,7 +201,7 @@ start_service() {
 	procd_append_param command -DNS_IP "$DNS_IP"
 	procd_append_param command -DNS_port "$DNS_port"
 	procd_append_param command -listen_port "$listen_port"
-	procd_append_param command -TUN_net "$TUN_start_ip/$TUN_sub_prefix"
+	procd_append_param command -TUN_net "$TUN_start_ip/$TUN_prefix"
 	procd_append_param command -TUN_name "$TUN_name"
 
 	procd_close_instance
