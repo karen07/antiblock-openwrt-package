@@ -11,7 +11,7 @@ is_server_exists=0
 get_server_from_dnsmasq() {
 	local server=$1
 
-	if [[ "$server" == "127.0.0.1#$listen_port" ]]; then
+	if [[ "$server" == "$listen_IP#$listen_port" ]]; then
 		is_server_exists=1
 	fi
 }
@@ -24,7 +24,7 @@ dnsmasq_walk_add() {
 	config_list_foreach $id server get_server_from_dnsmasq
 
 	if [[ "$is_server_exists" == "0" ]]; then
-		uci add_list dhcp.$id.server="127.0.0.1#$listen_port"
+		uci add_list dhcp.$id.server="$listen_IP#$listen_port"
 	fi
 }
 dnsmasq_walk_del() {
@@ -32,7 +32,7 @@ dnsmasq_walk_del() {
 
 	uci delete dhcp.$id.noresolv 2>/dev/null
 	uci set dhcp.$id.rebind_protection="1"
-	uci del_list dhcp.$id.server="127.0.0.1#$listen_port"
+	uci del_list dhcp.$id.server="$listen_IP#$listen_port"
 }
 
 is_firewall_rule_exists=0
@@ -161,6 +161,7 @@ start_service() {
 	config_get route_IP args route_IP
 	config_get DNS_IP args DNS_IP
 	config_get DNS_port args DNS_port
+	config_get listen_IP args listen_IP
 	config_get listen_port args listen_port
 	config_get TUN_name args TUN_name
 	config_get TUN_net args TUN_net
@@ -200,6 +201,7 @@ start_service() {
 	procd_append_param command -file "$file"
 	procd_append_param command -DNS_IP "$DNS_IP"
 	procd_append_param command -DNS_port "$DNS_port"
+	procd_append_param command -listen_IP "$listen_IP"
 	procd_append_param command -listen_port "$listen_port"
 	procd_append_param command -TUN_net "$TUN_start_ip/$TUN_prefix"
 	procd_append_param command -TUN_name "$TUN_name"
@@ -262,6 +264,7 @@ stop_service() {
 	config_get route_IP args route_IP
 	config_get DNS_IP args DNS_IP
 	config_get DNS_port args DNS_port
+	config_get listen_IP args listen_IP
 	config_get listen_port args listen_port
 	config_get TUN_name args TUN_name
 	config_get TUN_net args TUN_net

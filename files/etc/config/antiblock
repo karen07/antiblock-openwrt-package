@@ -6,6 +6,7 @@ config antiblock 'args'
 	option DNS_IP '1.1.1.1'
 	option DNS_port '53'
 
+	option listen_IP '192.168.1.1'
 	option listen_port '5053'
 
 	option TUN_name 'NAT'
