@@ -148,17 +148,23 @@ start_service() {
 
 	config_load "$PROG"
 
+	local log
+	local stat
 	local url
 	local file
 	local route_IP
+	local output
 	local DNS_IP
 	local DNS_port
 	local TUN_net
 	local VPN_name
 
+	config_get log args log
+	config_get stat args stat
 	config_get url args url
 	config_get file args file
 	config_get route_IP args route_IP
+	config_get output args output
 	config_get DNS_IP args DNS_IP
 	config_get DNS_port args DNS_port
 	config_get listen_IP args listen_IP
@@ -193,18 +199,44 @@ start_service() {
 	procd_open_instance
 
 	procd_set_param command "/usr/bin/$PROG"
-
-	procd_set_param respawn
 	procd_set_param stdout 1
 
-	procd_append_param command -url "$url"
-	procd_append_param command -file "$file"
-	procd_append_param command -DNS_IP "$DNS_IP"
-	procd_append_param command -DNS_port "$DNS_port"
-	procd_append_param command -listen_IP "$listen_IP"
-	procd_append_param command -listen_port "$listen_port"
-	procd_append_param command -TUN_net "$TUN_start_ip/$TUN_prefix"
-	procd_append_param command -TUN_name "$TUN_name"
+	if [[ "$log" != "" ]]; then
+		procd_append_param command -log
+	fi
+	if [[ "$stat" != "" ]]; then
+		procd_append_param command -stat
+	fi
+	if [[ "$output" != "" ]]; then
+		procd_append_param command -output $output
+	fi
+	if [[ "$route_IP" != "" ]]; then
+		procd_append_param command -route_IP $route_IP
+	fi
+	if [[ "$url" != "" ]]; then
+		procd_append_param command -url "$url"
+	fi
+	if [[ "$file" != "" ]]; then
+		procd_append_param command -file "$file"
+	fi
+	if [[ "$DNS_IP" != "" ]]; then
+		procd_append_param command -DNS_IP "$DNS_IP"
+	fi
+	if [[ "$DNS_port" != "" ]]; then
+		procd_append_param command -DNS_port "$DNS_port"
+	fi
+	if [[ "$listen_IP" != "" ]]; then
+		procd_append_param command -listen_IP "$listen_IP"
+	fi
+	if [[ "$listen_port" != "" ]]; then
+		procd_append_param command -listen_port "$listen_port"
+	fi
+	if [[ "$TUN_net" != "" ]]; then
+		procd_append_param command -TUN_net "$TUN_start_ip/$TUN_prefix"
+	fi
+	if [[ "$TUN_name" != "" ]]; then
+		procd_append_param command -TUN_name "$TUN_name"
+	fi
 
 	procd_close_instance
 
