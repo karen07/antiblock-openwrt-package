@@ -17,7 +17,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/antiblock
 	SECTION:=net
 	CATEGORY:=Network
-	DEPENDS:=libcurl
+	DEPENDS:=libcurl kmod-tun
 	TITLE:=DNS proxy add blocked domains ip address to route table.
 	URL:=https://github.com/karen07/antiblock
 endef
