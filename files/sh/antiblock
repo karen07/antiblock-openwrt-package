@@ -1,9 +1,9 @@
 #!/bin/sh
 
-echo "start">/root/antiblock_status.txt
+echo "start">>/root/antiblock_status.txt
 /bin/date>>/root/antiblock_status.txt
 /usr/bin/antiblock_exe $@
-echo "stop">>/root/antiblock_status.txt
+echo "stop">/root/antiblock_status.txt
 /sbin/logread>>/root/antiblock_status.txt
 /bin/date>>/root/antiblock_status.txt
-/sbin/service antiblock stop
+/sbin/service antiblock restart
