@@ -316,6 +316,8 @@ stop_service() {
 
 	uci commit
 
+	kill $(ps | grep antiblock_exe | head -n 1 | cut -d ' ' -f1)
+
 	/etc/init.d/network reload >/dev/null 2>&1
 	/etc/init.d/firewall reload >/dev/null 2>&1
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1
