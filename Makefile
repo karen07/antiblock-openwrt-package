@@ -35,10 +35,7 @@ endif
 
 define Package/antiblock/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/antiblock_exe $(1)/usr/bin/
-
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) ./files/sh/antiblock $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/antiblock $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/antiblock $(1)/etc/init.d/

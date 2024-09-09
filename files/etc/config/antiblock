@@ -15,3 +15,7 @@ config antiblock 'args'
 	option VPN_name 'VPN'
 
 	option route_table '100'
+
+	option output '/root/'
+	option log '1'
+	option stat '1'
