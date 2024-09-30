@@ -3,10 +3,10 @@ config antiblock 'args'
 	option url 'https://antifilter.download/list/domains.lst'
 	option file '/root/my_urls.txt'
 
-	option DNS_IP '192.168.1.1'
+	option DNS_IP '127.0.0.1'
 	option DNS_port '5060'
 
-	option listen_IP '192.168.1.1'
+	option listen_IP '127.0.0.1'
 	option listen_port '5053'
 
 	option TUN_name 'NAT'
