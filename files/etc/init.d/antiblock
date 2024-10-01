@@ -152,7 +152,6 @@ start_service() {
 	local stat
 	local url
 	local file
-	local route_IP
 	local output
 	local DNS_IP
 	local DNS_port
@@ -163,7 +162,6 @@ start_service() {
 	config_get stat args stat
 	config_get url args url
 	config_get file args file
-	config_get route_IP args route_IP
 	config_get output args output
 	config_get DNS_IP args DNS_IP
 	config_get DNS_port args DNS_port
@@ -208,10 +206,8 @@ start_service() {
 		procd_append_param command -stat
 	fi
 	if [[ "$output" != "" ]]; then
+		mkdir -p $output
 		procd_append_param command -output $output
-	fi
-	if [[ "$route_IP" != "" ]]; then
-		procd_append_param command -route_IP $route_IP
 	fi
 	if [[ "$url" != "" ]]; then
 		procd_append_param command -url "$url"
@@ -285,7 +281,6 @@ stop_service() {
 
 	local url
 	local file
-	local route_IP
 	local DNS_IP
 	local DNS_port
 	local TUN_net
@@ -293,7 +288,6 @@ stop_service() {
 
 	config_get url args url
 	config_get file args file
-	config_get route_IP args route_IP
 	config_get DNS_IP args DNS_IP
 	config_get DNS_port args DNS_port
 	config_get listen_IP args listen_IP

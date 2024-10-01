@@ -16,6 +16,6 @@ config antiblock 'args'
 
 	option route_table '100'
 
-	option output '/root/'
+	option output '/tmp/antiblock/'
 	option log '1'
 	option stat '1'
