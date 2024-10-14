@@ -8,7 +8,7 @@ PKG_LICENSE:=GPL-3.0-or-later
 ifeq ("$(wildcard ../antiblock)", "")
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/karen07/antiblock
-PKG_SOURCE_VERSION:=445e909d181a982927a6093a1fd1d65510ff3080
+PKG_SOURCE_VERSION:=7ff18f5246470dd604483692212a9089a77467c2
 endif
 
 include $(INCLUDE_DIR)/package.mk
