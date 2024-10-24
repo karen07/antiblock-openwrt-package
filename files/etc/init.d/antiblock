@@ -24,7 +24,7 @@ dnsmasq_walk_del() {
 
 	uci delete dhcp.$id.noresolv >/dev/null 2>&1
 	uci delete dhcp.$id.server >/dev/null 2>&1
-#	uci set dhcp.$id.rebind_protection="1" >/dev/null 2>&1
+	#uci set dhcp.$id.rebind_protection="1" >/dev/null 2>&1
 }
 
 #is_firewall_rule_exists=0
@@ -211,7 +211,7 @@ start_service() {
 		procd_append_param command -listen "$listen"
 	fi
 	if [[ "$VPN_name" != "" ]]; then
-	    gateway=$(uci get network.$VPN_name.addresses | cut -d '/' -f1)
+		gateway=$(uci get network.$VPN_name.addresses | cut -d '/' -f1)
 		procd_append_param command -gateway "$gateway"
 	fi
 	if [[ "$TUN_net" != "" ]]; then
