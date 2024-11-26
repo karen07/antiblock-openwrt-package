@@ -5,8 +5,6 @@ START=99
 
 USE_PROCD=1
 
-PROG=antiblock
-
 dnsmasq_walk_add() {
 	local id=$1
 	local listen_IP=$(echo $listen | cut -d ':' -f1)
@@ -15,177 +13,49 @@ dnsmasq_walk_add() {
 	uci set dhcp.$id.noresolv="1" >/dev/null 2>&1
 	uci delete dhcp.$id.server >/dev/null 2>&1
 	uci add_list dhcp.$id.server="$listen_IP#$listen_port" >/dev/null 2>&1
-	#uci set dhcp.$id.rebind_protection="0" >/dev/null 2>&1
 }
 dnsmasq_walk_del() {
 	local id=$1
-	local listen_IP=$(echo $listen | cut -d ':' -f1)
-	local listen_port=$(echo $listen | cut -d ':' -f2)
 
 	uci delete dhcp.$id.noresolv >/dev/null 2>&1
 	uci delete dhcp.$id.server >/dev/null 2>&1
-	#uci set dhcp.$id.rebind_protection="1" >/dev/null 2>&1
 }
 
-#is_firewall_rule_exists=0
-#get_network() {
-#	local network=$1
+antiblock_walk_add() {
+	local id=$1
 
-#	if [[ "$network" == "$TUN_name" ]]; then
-#		is_firewall_rule_exists=1
-#	fi
-#}
-#firewall_walk_add() {
-#	local id=$1
-#	local name
-
-#	config_get name $id name
-#	if [[ "$name" == "lan" ]]; then
-#		config_list_foreach $id network get_network
-#		if [[ "$is_firewall_rule_exists" == "0" ]]; then
-#			uci add_list firewall.$id.network="$TUN_name"
-#		fi
-#	fi
-#}
-#firewall_walk_del() {
-#	local id=$1
-#	local name
-
-#	config_get name $id name
-#	if [[ "$name" == "lan" ]]; then
-#		uci del_list firewall.$id.network="$TUN_name"
-#	fi
-#}
-
-#is_network_interface_exists=0
-#network_walk_add() {
-#	local network=$1
-
-#	if [[ "$network" == "$TUN_name" ]]; then
-#		is_network_interface_exists=1
-#	fi
-#}
-#network_walk_del() {
-#	local network=$1
-
-#	if [[ "$network" == "$TUN_name" ]]; then
-#		uci delete network.$TUN_name
-#	fi
-#}
-
-#is_network_route_exists=0
-#network_route_walk_add() {
-#	local id=$1
-#	local table
-
-#	config_get table $id table
-#	if [[ "$table" == "$route_table" ]]; then
-#		is_network_route_exists=1
-#	fi
-#}
-#network_route_walk_del() {
-#	local id=$1
-#	local table
-
-#	config_get table $id table
-#	if [[ "$table" == "$route_table" ]]; then
-#		uci delete network.$id
-#	fi
-#}
-
-#is_network_rule_exists=0
-#network_rule_walk_add() {
-#	local id=$1
-#	local lookup
-
-#	config_get lookup $id lookup
-#	if [[ "$lookup" == "$route_table" ]]; then
-#		is_network_rule_exists=1
-#	fi
-#}
-#network_rule_walk_del() {
-#	local id=$1
-#	local lookup
-
-#	config_get lookup $id lookup
-#	if [[ "$lookup" == "$route_table" ]]; then
-#		uci delete network.$id
-#	fi
-#}
-
-#ip2dec() {
-#	local a b c d ip ip_dec
-#	ip=$1
-
-#	a=$(echo $ip | cut -d '.' -f1)
-#	b=$(echo $ip | cut -d '.' -f2)
-#	c=$(echo $ip | cut -d '.' -f3)
-#	d=$(echo $ip | cut -d '.' -f4)
-
-#	ip_dec=$(($a * 256 ** 3 + $b * 256 ** 2 + $c * 256 + $d))
-#	echo $ip_dec
-#}
-
-#ip_bit_revers() {
-#	local ip_dec=$1
-#	local mask_prefix=$2
-
-#	mask=$((2 ** (32 - $mask_prefix)))
-
-#	echo $((ip_dec ^ mask))
-#}
+	config_get log "$id" log
+	config_get stat "$id" stat
+	config_get url "$id" url
+	config_get file "$id" file
+	config_get output "$id" output
+	config_get DNS "$id" DNS
+	config_get listen "$id" listen
+	config_get VPN_name "$id" VPN_name
+	config_get TUN_net "$id" TUN_net
+	config_get TUN_name "$id" TUN_name
+}
 
 start_service() {
-	echo "Antiblock start"
+	echo "AntiBlock start"
 
-	local log=""
-	local stat=""
-	local url=""
-	local file=""
-	local output=""
-	local DNS=""
+	log=""
+	stat=""
+	url=""
+	file=""
+	output=""
+	DNS=""
 	listen=""
-	local VPN_name=""
-	local TUN_net=""
+	VPN_name=""
+	TUN_net=""
 	TUN_name=""
 
-	config_load "$PROG"
-	config_get log args log
-	config_get stat args stat
-	config_get url args url
-	config_get file args file
-	config_get output args output
-	config_get DNS args DNS
-	config_get listen args listen
-	config_get VPN_name args VPN_name
-	config_get TUN_net args TUN_net
-	config_get TUN_name args TUN_name
-
-	#ipcalc=$(/bin/ipcalc.sh $TUN_net)
-
-	#TUN_ip=$(echo "$ipcalc" | grep IP | cut -d '=' -f2-)
-	#TUN_subnet=$(echo "$ipcalc" | grep NETMASK | cut -d '=' -f2-)
-	#TUN_network=$(echo "$ipcalc" | grep NETWORK | cut -d '=' -f2-)
-	#TUN_prefix=$(echo "$ipcalc" | grep PREFIX | cut -d '=' -f2-)
-
-	#TUN_sub_prefix=$(($TUN_prefix + 1))
-
-	#TUN_network_dec=$(ip2dec $TUN_network)
-	#TUN_network_dec=$(($TUN_network_dec + 1))
-
-	#ipcalc_dec=$(/bin/ipcalc.sh $TUN_network_dec)
-
-	#TUN_start_ip=$(echo "$ipcalc_dec" | grep IP | cut -d '=' -f2-)
-
-	#TUN_network_dec=$(ip_bit_revers $TUN_network_dec $TUN_sub_prefix)
-
-	#ipcalc_dec=$(/bin/ipcalc.sh $TUN_network_dec)
-
-	#TUN_sub_ip=$(echo "$ipcalc_dec" | grep IP | cut -d '=' -f2-)
+	config_load antiblock
+	config_foreach antiblock_walk_add antiblock
 
 	procd_open_instance
 
-	procd_set_param command "/usr/bin/$PROG"
+	procd_set_param command "/usr/bin/antiblock"
 	procd_set_param stdout 1
 
 	if [[ "$log" != "" ]]; then
@@ -208,6 +78,8 @@ start_service() {
 		procd_append_param command -DNS "$DNS"
 	fi
 	if [[ "$listen" != "" ]]; then
+		config_load dhcp
+		config_foreach dnsmasq_walk_add dnsmasq
 		procd_append_param command -listen "$listen"
 	fi
 	if [[ "$VPN_name" != "" ]]; then
@@ -223,84 +95,18 @@ start_service() {
 
 	procd_close_instance
 
-	config_load dhcp
-	config_foreach dnsmasq_walk_add dnsmasq
-
-	#config_load firewall
-	#config_foreach firewall_walk_add zone
-
-	#config_load network
-	#config_foreach network_walk_add interface
-	#if [[ "$is_network_interface_exists" == "0" ]]; then
-	#	uci set network.$TUN_name=interface
-	#	uci set network.$TUN_name.proto="static"
-	#	uci set network.$TUN_name.device="$TUN_name"
-	#	uci set network.$TUN_name.ipaddr="$TUN_start_ip"
-	#	uci set network.$TUN_name.netmask="$TUN_subnet"
-	#fi
-
-	#config_foreach network_route_walk_add route
-	#if [[ "$is_network_route_exists" == "0" ]]; then
-	#	local route_id=$(uci add network route)
-	#	uci set network.$route_id.interface="$VPN_name"
-	#	uci set network.$route_id.target="0.0.0.0/0"
-	#	uci set network.$route_id.table="$route_table"
-	#fi
-
-	#config_foreach network_rule_walk_add rule
-	#if [[ "$is_network_rule_exists" == "0" ]]; then
-	#	local rule_id=$(uci add network rule)
-	#	uci set network.$rule_id.src="$TUN_sub_ip/$TUN_sub_prefix"
-	#	uci set network.$rule_id.lookup="$route_table"
-	#fi
-
 	uci commit
 
-	#/etc/init.d/network reload >/dev/null 2>&1
-	#/etc/init.d/firewall reload >/dev/null 2>&1
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1
 }
 
 stop_service() {
-	echo "Antiblock stop"
-
-	local log=""
-	local stat=""
-	local url=""
-	local file=""
-	local output=""
-	local DNS=""
-	listen=""
-	local VPN_name=""
-	local TUN_net=""
-	TUN_name=""
-
-	config_load "$PROG"
-	config_get log args log
-	config_get stat args stat
-	config_get url args url
-	config_get file args file
-	config_get output args output
-	config_get DNS args DNS
-	config_get listen args listen
-	config_get VPN_name args VPN_name
-	config_get TUN_net args TUN_net
-	config_get TUN_name args TUN_name
+	echo "AntiBlock stop"
 
 	config_load dhcp
 	config_foreach dnsmasq_walk_del dnsmasq
 
-	#config_load firewall
-	#config_foreach firewall_walk_del zone
-
-	#config_load network
-	#config_foreach network_walk_del interface
-	#config_foreach network_route_walk_del route
-	#config_foreach network_rule_walk_del rule
-
 	uci commit
 
-	#/etc/init.d/network reload >/dev/null 2>&1
-	#/etc/init.d/firewall reload >/dev/null 2>&1
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1
 }
