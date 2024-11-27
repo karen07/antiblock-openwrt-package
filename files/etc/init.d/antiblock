@@ -2,7 +2,6 @@
 # Copyright (C) 2010-2015 OpenWrt.org
 
 START=99
-
 USE_PROCD=1
 
 dnsmasq_walk_add() {
@@ -32,8 +31,6 @@ antiblock_walk_add() {
 	config_get DNS "$id" DNS
 	config_get listen "$id" listen
 	config_get VPN_name "$id" VPN_name
-	config_get TUN_net "$id" TUN_net
-	config_get TUN_name "$id" TUN_name
 }
 
 start_service() {
@@ -47,8 +44,6 @@ start_service() {
 	DNS=""
 	listen=""
 	VPN_name=""
-	TUN_net=""
-	TUN_name=""
 
 	config_load antiblock
 	config_foreach antiblock_walk_add antiblock
@@ -85,12 +80,6 @@ start_service() {
 	if [[ "$VPN_name" != "" ]]; then
 		gateway=$(uci get network.$VPN_name.addresses | cut -d '/' -f1)
 		procd_append_param command -gateway "$gateway"
-	fi
-	if [[ "$TUN_net" != "" ]]; then
-		procd_append_param command -TUN_net "$TUN_start_ip/$TUN_prefix"
-	fi
-	if [[ "$TUN_name" != "" ]]; then
-		procd_append_param command -TUN_name "$TUN_name"
 	fi
 
 	procd_close_instance
