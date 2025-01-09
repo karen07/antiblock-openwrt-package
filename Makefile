@@ -8,6 +8,7 @@ ifeq ("$(wildcard ../antiblock)", "")
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/karen07/antiblock
 PKG_SOURCE_VERSION:=bd8e4ae4fe066833d63574bad0d6e1989f6e98f0
+PKG_MIRROR_HASH:=d0411f62785c4636b760729ab269e21bba12e4c10b315ac8f7cf48f68475b796
 endif
 
 PKG_MAINTAINER:=Khachatryan Karen <karen0734@gmail.com>
@@ -17,16 +18,17 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/antiblock
-	SECTION:=net
-	CATEGORY:=Network
-	DEPENDS:=+libcurl
-	TITLE:=AntiBlock
-	URL:=https://github.com/karen07/antiblock
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=+libcurl
+  TITLE:=AntiBlock
+  URL:=https://github.com/karen07/antiblock
 endef
 
 define Package/antiblock/description
-AntiBlock program proxies DNS requests.
-The IP addresses of the specified domains are added to the routing table for routing through the specified interface.
+  AntiBlock program proxies DNS requests.
+  The IP addresses of the specified domains are added to the routing
+  table for routing through the specified interface.
 endef
 
 define Package/antiblock/conffiles
