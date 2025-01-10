@@ -93,7 +93,9 @@ stop_service() {
 			uci -q set dhcp.@dnsmasq[0].noresolv="$dhcp_noresolv_backup"
 		fi
 		if [ -n "$dhcp_server_backup" ]; then
-			uci -q add_list dhcp.@dnsmasq[0].server="$dhcp_server_backup"
+			for i in $(echo $dhcp_server_backup | tr " " "\n"); do
+				uci -q add_list dhcp.@dnsmasq[0].server="$i"
+			done
 		fi
 
 		uci -q delete antiblock.@antiblock[0].dhcp_noresolv_backup
