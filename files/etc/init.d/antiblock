@@ -74,6 +74,7 @@ start_service() {
 
 	procd_close_instance
 
+	uci -q commit antiblock.@dhcp_backup[0]
 	uci -q commit dhcp.@dnsmasq[0]
 
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1
@@ -103,6 +104,7 @@ stop_service() {
 		uci -q delete antiblock.@dhcp_backup[0]
 	fi
 
+	uci -q commit antiblock.@dhcp_backup[0]
 	uci -q commit dhcp.@dnsmasq[0]
 
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1
