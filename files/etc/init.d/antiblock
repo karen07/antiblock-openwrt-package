@@ -104,6 +104,15 @@ stop_service() {
 		uci -q delete antiblock.@dhcp_backup[0]
 	fi
 
+	local VPN_name="$(uci -q get antiblock.@antiblock[0].VPN_name)"
+
+	if [ -n "$VPN_name" ]; then
+		local ips="$(ip r | grep "dev $VPN_name" | grep via | cut -d' ' -f 1)"
+		for i in $ips; do
+			ip r del $i >/dev/null 2>&1
+		done
+	fi
+
 	uci -q commit antiblock.@dhcp_backup[0]
 	uci -q commit dhcp.@dnsmasq[0]
 
