@@ -61,7 +61,7 @@ start_service() {
 stop_service() {
 	echo "AntiBlock stop"
 
-	uci revert dhcp.@dnsmasq[0]
+	uci -q revert dhcp.@dnsmasq[0]
 
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1
 }
