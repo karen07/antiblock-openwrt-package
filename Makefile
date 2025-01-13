@@ -7,8 +7,8 @@ PKG_RELEASE:=1
 ifeq ("$(wildcard ../antiblock)", "")
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/karen07/antiblock
-PKG_SOURCE_VERSION:=f97a9790ae2310e0cb0fa97786974f0cecfda789
-PKG_MIRROR_HASH:=51b37291f603a7f84e736ba0683ceccf79a8cd231788531824b1341b16cbb22a
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_MIRROR_HASH:=3ea495e825edb75bc0bec9010d4b0195442dbcc745fc4d3150ae41ca11e9dfc4
 endif
 
 PKG_MAINTAINER:=Khachatryan Karen <karen0734@gmail.com>
