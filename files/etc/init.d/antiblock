@@ -18,7 +18,7 @@ start_service() {
 	local _file
 	local _listen
 	local _DNS
-	local _VPN_name
+	local _gateway
 	local _log
 	local _stat
 	local _output
@@ -28,7 +28,7 @@ start_service() {
 
 	config_get _listen "config" "listen"
 	config_get _DNS "config" "DNS"
-	config_get _VPN_name "config" "VPN_name"
+	config_get _gateway "config" "gateway"
 
 	config_get_bool _log "config" "log" "0"
 	config_get_bool _stat "config" "stat" "0"
@@ -53,9 +53,8 @@ start_service() {
 		procd_append_param command -listen "${_listen}"
 	fi
 	[ -n "${_DNS}" ] && procd_append_param command -DNS "${_DNS}"
-	if [ -n "${_VPN_name}" ]; then
-		local gateway="$(ip r | grep -v via | grep "dev ${_VPN_name} " | grep src | awk '{print $NF}')"
-		procd_append_param command -gateway "$gateway"
+	if [ -n "${_gateway}" ]; then
+		procd_append_param command -gateway "${_gateway}"
 	fi
 
 	[ "${_log}" -ne "0" ] && procd_append_param command -log
