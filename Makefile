@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=antiblock
 PKG_VERSION:=2.0.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 ifeq ("$(wildcard ../antiblock)", "")
 PKG_SOURCE_PROTO:=git
