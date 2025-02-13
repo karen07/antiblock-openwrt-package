@@ -1,14 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=antiblock
-PKG_VERSION:=2.0.2
-PKG_RELEASE:=2
+PKG_VERSION:=2.0.3
+PKG_RELEASE:=1
 
 ifeq ("$(wildcard ../antiblock)", "")
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/karen07/antiblock
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=00d9d50d12bdb3d3ec6ddefe0b3ea254433a1d58867b0fae87a12dd24ec1ba87
+PKG_MIRROR_HASH:=skip
 endif
 
 PKG_MAINTAINER:=Khachatryan Karen <karen0734@gmail.com>

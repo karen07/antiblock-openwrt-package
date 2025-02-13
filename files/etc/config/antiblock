@@ -2,13 +2,13 @@
 #config antiblock 'config'
 	#option enabled '0'
 	#At least one parameters needs to be filled:
-		#option url 'https://antifilter.download/list/domains.lst'
-		#option file '/root/domains'
+		#option url         'https://example.com'
+		#option file        '/example.txt'
 	#Required parameters:
-		#option listen '192.168.1.1:5053'
-		#option DNS '1.1.1.1:53'
-		#option gateway '10.8.0.10'
+		#option listen      'x.x.x.x:xx'
+		#option DNS         'x.x.x.x:xx'
+		#option gateway     'x.x.x.x'
 	#Optional parameters:
-		#option log '1'
-		#option stat '1'
-		#option output '/tmp/antiblock'
+		#option log         '1'
+		#option stat        '1'
+		#option output      '/example/'
