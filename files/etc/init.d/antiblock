@@ -53,10 +53,7 @@ start_service() {
 		procd_append_param command -listen "${_listen}"
 	fi
 	[ -n "${_DNS}" ] && procd_append_param command -DNS "${_DNS}"
-	if [ -n "${_gateway}" ]; then
-		procd_append_param command -gateway "${_gateway}"
-	fi
-
+	[ -n "${_gateway}" ] && procd_append_param command -gateway "${_gateway}"
 	[ "${_log}" -ne "0" ] && procd_append_param command -log
 	[ "${_stat}" -ne "0" ] && procd_append_param command -stat
 	if [ -n "${_output}" ]; then
