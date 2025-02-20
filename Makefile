@@ -29,7 +29,7 @@ endef
 define Package/antiblock/description
   AntiBlock program proxies DNS requests.
   The IP addresses of the specified domains are added to
-  the routing table for routing through the specified interface.
+  the routing table for routing through the specified interfaces.
 endef
 
 define Package/antiblock/conffiles
