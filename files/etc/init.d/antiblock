@@ -5,6 +5,12 @@ START=99
 
 CONF="antiblock"
 
+domains_parse() {
+	local _value="$1"
+
+	procd_append_param command -domains "${_value}"
+}
+
 start_service() {
 	config_load "$CONF"
 
@@ -14,21 +20,15 @@ start_service() {
 
 	echo "AntiBlock start"
 
-	local _url
-	local _file
 	local _listen
 	local _DNS
-	local _gateway
+
 	local _log
 	local _stat
 	local _output
 
-	config_get _url "config" "url"
-	config_get _file "config" "file"
-
 	config_get _listen "config" "listen"
 	config_get _DNS "config" "DNS"
-	config_get _gateway "config" "gateway"
 
 	config_get_bool _log "config" "log" "0"
 	config_get_bool _stat "config" "stat" "0"
@@ -40,9 +40,6 @@ start_service() {
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 
-	[ -n "${_url}" ] && procd_append_param command -url "${_url}"
-	[ -n "${_file}" ] && procd_append_param command -file "${_file}"
-
 	if [ -n "${_listen}" ]; then
 		local listen_IP="$(echo "${_listen}" | cut -d ':' -f1)"
 		local listen_port="$(echo "${_listen}" | cut -d ':' -f2)"
@@ -53,7 +50,9 @@ start_service() {
 		procd_append_param command -listen "${_listen}"
 	fi
 	[ -n "${_DNS}" ] && procd_append_param command -DNS "${_DNS}"
-	[ -n "${_gateway}" ] && procd_append_param command -gateway "${_gateway}"
+
+	config_list_foreach "config" domains domains_parse
+
 	[ "${_log}" -ne "0" ] && procd_append_param command -log
 	[ "${_stat}" -ne "0" ] && procd_append_param command -stat
 	if [ -n "${_output}" ]; then
