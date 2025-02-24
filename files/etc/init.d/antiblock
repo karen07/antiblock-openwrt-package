@@ -8,7 +8,7 @@ CONF="antiblock"
 domains_parse() {
 	local _value="$1"
 
-	procd_append_param command -domains "${_value}"
+	procd_append_param command -r "${_value}"
 }
 
 start_service() {
@@ -20,15 +20,9 @@ start_service() {
 
 	echo "AntiBlock start"
 
-	local _listen
-	local _DNS
-
 	local _log
 	local _stat
 	local _output
-
-	config_get _listen "config" "listen"
-	config_get _DNS "config" "DNS"
 
 	config_get_bool _log "config" "log" "0"
 	config_get_bool _stat "config" "stat" "0"
@@ -40,24 +34,13 @@ start_service() {
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 
-	if [ -n "${_listen}" ]; then
-		local listen_IP="$(echo "${_listen}" | cut -d ':' -f1)"
-		local listen_port="$(echo "${_listen}" | cut -d ':' -f2)"
-		uci -q set dhcp.@dnsmasq[0].noresolv="1"
-		uci -q delete dhcp.@dnsmasq[0].server
-		uci -q add_list dhcp.@dnsmasq[0].server="$listen_IP#$listen_port"
-
-		procd_append_param command -listen "${_listen}"
-	fi
-	[ -n "${_DNS}" ] && procd_append_param command -DNS "${_DNS}"
-
 	config_list_foreach "config" domains domains_parse
 
-	[ "${_log}" -ne "0" ] && procd_append_param command -log
-	[ "${_stat}" -ne "0" ] && procd_append_param command -stat
+	[ "${_log}" -ne "0" ] && procd_append_param command --log
+	[ "${_stat}" -ne "0" ] && procd_append_param command --stat
 	if [ -n "${_output}" ]; then
 		mkdir -p "${_output}"
-		procd_append_param command -output "${_output}"
+		procd_append_param command -o "${_output}"
 	fi
 
 	procd_close_instance
@@ -67,8 +50,6 @@ start_service() {
 
 stop_service() {
 	echo "AntiBlock stop"
-
-	uci -q revert dhcp.@dnsmasq[0]
 
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1
 }
