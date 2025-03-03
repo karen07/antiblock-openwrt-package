@@ -20,12 +20,12 @@ start_service() {
 
 	echo "AntiBlock start"
 
-	local _backlist
+	local _blacklist
 	local _output
 	local _log
 	local _stat
 
-	config_get _backlist "config" "backlist"
+	config_get _blacklist "config" "blacklist"
 	config_get _output "config" "output"
 	config_get_bool _log "config" "log" "0"
 	config_get_bool _stat "config" "stat" "0"
@@ -38,7 +38,7 @@ start_service() {
 
 	config_list_foreach "config" domains domains_parse
 
-	[ -n "${_backlist}" ] && procd_append_param command -b "${_backlist}"
+	[ -n "${_blacklist}" ] && procd_append_param command -b "${_blacklist}"
 	if [ -n "${_output}" ]; then
 		mkdir -p "${_output}"
 		procd_append_param command -o "${_output}"
