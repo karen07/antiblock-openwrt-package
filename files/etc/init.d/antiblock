@@ -41,7 +41,7 @@ start_service() {
 	config_list_foreach "config" domains domains_parse
 
 	local _listen
-	_listen=$(uci show | grep network.lan.ipaddr | cut -d"=" -f2 | cut -d"'" -f2)":53"
+	_listen="$(uci -q get network.lan.ipaddr):53"
 	procd_append_param command -l "${_listen}"
 
 	[ -n "${_blacklist}" ] && procd_append_param command -b "${_blacklist}"
