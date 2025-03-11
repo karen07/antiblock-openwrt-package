@@ -5,7 +5,7 @@ START=99
 
 CONF="antiblock"
 
-domains_parse() {
+routes_parse() {
 	local _value="$1"
 
 	procd_append_param command -r "${_value}"
@@ -38,7 +38,7 @@ start_service() {
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 
-	config_list_foreach "config" domains domains_parse
+	config_list_foreach "config" routes routes_parse
 
 	local _listen
 	_listen="$(uci -q get network.lan.ipaddr):53"
