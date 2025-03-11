@@ -7,7 +7,7 @@
 		#list routes 		'gateway2 /test2.txt'
 		#list routes 		'gateway1 https://test2.com'
 	#Optional parameters:
-		#option log         '1'
-		#option stat        '1'
-		#option output      '/test/'
+		#option log			'1'
+		#option stat		'1'
+		#option output		'/test/'
 		#option blacklist 	'/test.txt'
