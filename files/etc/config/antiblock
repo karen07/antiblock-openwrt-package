@@ -1,13 +1,25 @@
 
-#config antiblock 'config'
+#config main 'config'
 	#option enabled '0'
-	#At least one parameters needs to be filled:
-		#list routes 		'gateway1 https://test1.com'
-		#list routes 		'gateway2 /test1.txt'
-		#list routes 		'gateway2 /test2.txt'
-		#list routes 		'gateway1 https://test2.com'
 	#Optional parameters:
-		#option log			'1'
-		#option stat		'1'
-		#option output		'/test/'
-		#option blacklist 	'/test.txt'
+	#option log			'1'
+	#option stat		'1'
+	#option output		'/test/'
+	#option blacklist 	'/test.txt'
+
+#At least one parameters needs to be filled:
+#config route
+		#option gateway 'gateway1'
+		#option domains_path 'https://test1.com'
+
+#config route
+		#option gateway 'gateway2'
+		#option domains_path '/test1.txt'
+
+#config route
+		#option gateway 'gateway2'
+		#option domains_path '/test2.txt'
+
+#config route
+		#option gateway 'gateway1'
+		#option domains_path 'https://test2.com'
