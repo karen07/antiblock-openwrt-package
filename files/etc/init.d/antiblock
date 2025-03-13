@@ -6,9 +6,15 @@ START=99
 CONF="antiblock"
 
 routes_parse() {
-	local _value="$1"
+	local _config="$1"
 
-	procd_append_param command -r "${_value}"
+	local _gateway
+	local _domains_path
+
+	config_get _gateway "${_config}" gateway
+	config_get _domains_path "${_config}" domains_path
+
+	procd_append_param command -r "${_gateway} ${_domains_path}"
 }
 
 start_service() {
@@ -38,7 +44,7 @@ start_service() {
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 
-	config_list_foreach "config" routes routes_parse
+	config_foreach routes_parse route
 
 	local _listen
 	_listen="$(uci -q get network.lan.ipaddr):53"
