@@ -49,7 +49,6 @@ start_service() {
 	local _listen
 	_listen="$(uci -q get network.lan.ipaddr):53"
 	procd_append_param command -l "${_listen}"
-	procd_append_param command -i "br-lan"
 
 	[ -n "${_blacklist}" ] && procd_append_param command -b "${_blacklist}"
 	[ -n "${_output}" ] && mkdir -p "${_output}" && procd_append_param command -o "${_output}"
