@@ -1,25 +1,27 @@
 
 #config main 'config'
-	#option enabled '0'
-	#Optional parameters:
-	#option log			'1'
-	#option stat		'1'
-	#option output		'/test/'
-	#option blacklist 	'/test.txt'
+#Required parameters:
+	#option enabled       '0'
+#Optional parameters:
+	#option log			  '1'
+	#option stat		  '1'
+	#option output		  '/test/'
+	#list blacklist 	  'x.x.x.x/xx'
+	#list blacklist 	  'x.x.x.x/xx'
 
 #At least one parameters needs to be filled:
 #config route
-	#option gateway 'gateway1'
-	#option domains_path 'https://test1.com'
+	#option gateway       'gateway1'
+	#option domains_path  'https://test1.com'
 
 #config route
-	#option gateway 'gateway2'
-	#option domains_path '/test1.txt'
+	#option gateway       'gateway2'
+	#option domains_path  '/test1.txt'
 
 #config route
-	#option gateway 'gateway2'
-	#option domains_path '/test2.txt'
+	#option gateway       'gateway2'
+	#option domains_path  '/test2.txt'
 
 #config route
-	#option gateway 'gateway1'
-	#option domains_path 'https://test2.com'
+	#option gateway       'gateway1'
+	#option domains_path  'https://test2.com'
