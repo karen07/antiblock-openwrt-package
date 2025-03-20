@@ -9,7 +9,7 @@
 	#list blacklist 	  'x.x.x.x/xx'
 	#list blacklist 	  'x.x.x.x/xx'
 
-#At least one parameters needs to be filled:
+#It is necessary to enter from 1 to 32 values:
 #config route
 	#option gateway       'gateway1'
 	#option domains_path  'https://test1.com'
