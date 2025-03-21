@@ -4,7 +4,8 @@ USE_PROCD=1
 START=99
 
 prog_name="antiblock"
-blacklist_path="/tmp/antiblock/blacklist"
+blacklist_folder="/tmp/$prog_name"
+blacklist_file="$blacklist_folder/blacklist"
 
 routes_parse() {
 	local _config="$1"
@@ -19,9 +20,9 @@ routes_parse() {
 }
 
 blacklist_parse() {
-	[ "${_blacklist_count}" -eq "0" ] && mkdir -p /tmp/antiblock && >$blacklist_path
+	[ "${_blacklist_count}" -eq "0" ] && mkdir -p $blacklist_folder && >$blacklist_file
 	_blacklist_count=$(expr "${_blacklist_count}" + 1)
-	echo "$1" >>$blacklist_path
+	echo "$1" >>$blacklist_file
 }
 
 start_service() {
@@ -59,7 +60,7 @@ start_service() {
 	procd_append_param command -l "${_listen}"
 
 	[ -n "${_output}" ] && mkdir -p "${_output}" && procd_append_param command -o "${_output}"
-	[ "${_blacklist_count}" -ne "0" ] && procd_append_param command -b "$blacklist_path"
+	[ "${_blacklist_count}" -ne "0" ] && procd_append_param command -b "$blacklist_file"
 	[ "${_log}" -ne "0" ] && procd_append_param command --log
 	[ "${_stat}" -ne "0" ] && procd_append_param command --stat
 	[ "${_test}" -ne "0" ] && procd_append_param command --test
