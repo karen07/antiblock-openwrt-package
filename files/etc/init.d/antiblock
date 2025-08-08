@@ -58,7 +58,6 @@ start_service() {
 
     config_foreach routes_parse route
 
-    _listen=""
     _listen="$(uci -q get network.lan.ipaddr):53"
     procd_append_param command -l "${_listen}"
 
