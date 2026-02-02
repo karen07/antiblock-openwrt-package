@@ -21,7 +21,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/antiblock
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libcurl +libpcap
+  DEPENDS:=+libcurl +libpcap1
   TITLE:=AntiBlock
   URL:=https://github.com/karen07/antiblock
 endef
