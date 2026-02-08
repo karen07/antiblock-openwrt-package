@@ -5,6 +5,7 @@ USE_PROCD=1
 START=99
 
 prog_name="antiblock"
+bin="/usr/bin/$prog_name"
 tmp_folder="/tmp/$prog_name"
 blacklist_file="$tmp_folder/blacklist"
 
@@ -52,7 +53,7 @@ start_service() {
 
     procd_open_instance "$prog_name"
 
-    procd_set_param command "/usr/bin/$prog_name"
+    procd_set_param command "$bin"
     procd_set_param stdout 1
     procd_set_param stderr 1
 
