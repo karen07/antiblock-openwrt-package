@@ -4,16 +4,19 @@ PKG_NAME:=antiblock
 PKG_VERSION:=3.0.0
 PKG_RELEASE:=1
 
-ifeq ("$(wildcard ../antiblock)", "")
+# Local sources are located next to the *-openwrt-package repository.
+PKG_LOCAL_SOURCE_DIR:=$(abspath $(realpath $(CURDIR))/../../$(PKG_NAME))
+
+ifeq ($(wildcard $(PKG_LOCAL_SOURCE_DIR)/CMakeLists.txt),)
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/karen07/antiblock
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_MIRROR_HASH:=skip
 endif
 
-PKG_MAINTAINER:=Karen Khachatryan <karen0734@gmail.com>
 PKG_LICENSE:=AGPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
+PKG_MAINTAINER:=Karen Khachatryan <karen0734@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -37,10 +40,10 @@ define Package/antiblock/conffiles
 /etc/config/antiblock
 endef
 
-ifneq ("$(wildcard ../antiblock)", "")
+ifneq ($(wildcard $(PKG_LOCAL_SOURCE_DIR)/CMakeLists.txt),)
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
-	$(CP) ../antiblock/. $(PKG_BUILD_DIR)/
+	$(CP) $(PKG_LOCAL_SOURCE_DIR)/. $(PKG_BUILD_DIR)/
 endef
 endif
 
@@ -49,10 +52,10 @@ define Package/antiblock/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/antiblock $(1)/usr/bin/antiblock
 
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) files/etc/init.d/antiblock $(1)/etc/init.d/antiblock
+	$(INSTALL_BIN) ./files/etc/init.d/antiblock $(1)/etc/init.d/antiblock
 
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) files/etc/config/antiblock $(1)/etc/config/antiblock
+	$(INSTALL_CONF) ./files/etc/config/antiblock $(1)/etc/config/antiblock
 endef
 
 $(eval $(call BuildPackage,antiblock))
