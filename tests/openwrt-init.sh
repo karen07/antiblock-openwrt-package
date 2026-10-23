@@ -10,7 +10,7 @@ if [ -e /dev/watchdog ] || [ -e /dev/watchdog0 ]; then
     exit 1
 fi
 
-cat > /etc/config/network <<EONET
+cat >/etc/config/network <<EONET
 config interface 'loopback'
         option device 'lo'
         option proto 'static'
