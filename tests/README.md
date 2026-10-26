@@ -1,10 +1,21 @@
-# OpenWrt package E2E tests
+# AntiBlock OpenWrt Package E2E Tests
 
-These tests belong to the OpenWrt package repository, not to the AntiBlock core.
-They build the package with the same shared `openwrt-build.sh` used by CI and
-then validate the resulting APK in an OpenWrt x86/64 Docker runtime.
+Docker-based end-to-end tests that build the AntiBlock OpenWrt package using the shared CI builder and verify its APK, init scripts, DNS integration, and kernel routes in an OpenWrt runtime.
 
-Expected local layout:
+## Описание
+
+End-to-end тесты пакета AntiBlock для OpenWrt. Они собирают пакет тем же общим скриптом, что используется в CI, затем проверяют APK, init-скрипты, DNS-интеграцию и маршруты ядра в контейнерном окружении OpenWrt.
+
+Эти тесты относятся к репозиторию OpenWrt-пакета, а не к основному исходному коду AntiBlock.
+
+## Требования
+
+- Соседний репозиторий `openwrt-package-ci` со скриптом `openwrt-build.sh`.
+- Docker с запущенным демоном, стандартные инструменты сборки OpenWrt и доступ к Интернету на этапах сборки/подготовки окружения.
+- При первом запуске доступ к `ghcr.io` для загрузки образа rootfs OpenWrt.
+- В контейнере используются только `NET_ADMIN` и `NET_RAW`, без `--privileged` и без доступа к аппаратным watchdog хоста.
+
+Ожидаемое размещение исходников:
 
 ```text
 work/
@@ -16,24 +27,37 @@ work/
     `-- tests/
 ```
 
-Run everything from `antiblock-openwrt-package`:
+## Быстрый старт
+
+Из корня `antiblock-openwrt-package`:
 
 ```sh
 ./tests/run.sh
 ```
 
-The default builder path is:
+Для выбора другой версии OpenWrt:
+
+```sh
+OPENWRT_VERSION=25.12.5 ./tests/run.sh
+```
+
+Для указания другого пути к общему сборщику:
+
+```sh
+OPENWRT_BUILD_SH=/path/to/openwrt-build.sh ./tests/run.sh
+```
+
+## Сборка и установка
+
+По умолчанию используется общий сборщик:
 
 ```text
 ../openwrt-package-ci/openwrt-build.sh
 ```
 
-The shared builder expects `openwrt-build.env` and package directories relative
-to its own `$0`. GitHub Actions solves this by copying `openwrt-build.sh` into
-the package repository before running it. `tests/run.sh` does the same with a
-temporary file and removes it afterwards.
+Общий сборщик ожидает `openwrt-build.env` и каталоги пакетов относительно собственного `$0`. В GitHub Actions он копируется в репозиторий пакета; `tests/run.sh` делает то же самое во временный файл, который затем удаляется.
 
-The build command is equivalent to:
+Эквивалентная команда сборки:
 
 ```sh
 ./openwrt-build.sh \
@@ -46,57 +70,34 @@ The build command is equivalent to:
     tests/.artifacts
 ```
 
-The resulting APK path is piped into `tests/run-runtime.sh`.
+Полученный путь к APK передаётся в `tests/run-runtime.sh`.
 
-The runtime test pulls the official OpenWrt 25.12.5 x86/64 Docker rootfs from
-`ghcr.io/openwrt/rootfs:x86_64-25.12.5`. It installs dnsmasq and the just-built
-AntiBlock APK, prepares a temporary image, and boots it with procd and ubus on an
-internal Docker network. The booted runtime does not need external Internet access.
+## Архитектура и реализация
 
-During image preparation, the harness disables `procd_add_jail*` calls in the
-**container copy** of `/etc/init.d/dnsmasq`. OpenWrt's default dnsmasq `ujail`
-requires namespace operations unavailable in this unprivileged Docker runtime;
-without this workaround dnsmasq fails with `jail: failed to clone/fork: Operation not permitted`. Only dnsmasq jail setup is bypassed: dnsmasq still runs under
-`procd`, so stopped/running/cache integration tests remain active. No package
-files or AntiBlock production init scripts are modified. A real OpenWrt device
-or VM should still be used to validate dnsmasq with the normal jail enabled.
-The boot configuration also disables the LAN DHCP pool for this DNS-only E2E
-network, so dnsmasq does not probe for DHCP servers via `udhcpc`.
+### Тестовое окружение
 
-The runtime scenarios verify real kernel routes for L2 and L3 rules, legacy
-`gateway`, route moves, blacklist, `--test`, log/stat, route cleanup, procd
-respawn, that a stopped dnsmasq stays stopped, and that starting AntiBlock
-restarts a running dnsmasq and clears its warm DNS cache. It also verifies
-disabled per-route UCI sections, source changes
-after UCI commit/service restart, service reload (including replacement of
-active routes and blacklist-only updates), and acceptance of 32 enabled routing rules.
-The init script requires at least one enabled rule with `interface` (or legacy
-`gateway`) and `domains_path`; the AntiBlock binary validates the maximum rule
-count and remaining argument constraints. The runtime suite contains 25 checks, including five start-up route
-validation regressions: no routes, missing interface/gateway, missing
-domains_path, all routes disabled, and one usable rule alongside an
-incomplete rule.
+Тесты используют официальный OpenWrt 25.12.5 x86/64 Docker rootfs `ghcr.io/openwrt/rootfs:x86_64-25.12.5`: добавляют `dnsmasq`, собранный APK, загружают окружение с `procd` и `ubus` во внутренней сети Docker. После подготовки окружения доступ к внешнему Интернету ему не нужен.
 
-To use another OpenWrt release:
+В копии `/etc/init.d/dnsmasq` **внутри тестового контейнера** выключаются вызовы `procd_add_jail*`: стандартный OpenWrt `ujail` требует namespace-операций, недоступных в этом непривилегированном Docker-окружении. Без обхода dnsmasq выдаёт `jail: failed to clone/fork: Operation not permitted`.
 
-```sh
-OPENWRT_VERSION=25.12.5 ./tests/run.sh
-```
+Меняется только настройка jail для dnsmasq в тестовой копии: dnsmasq по-прежнему работает под `procd`, а production-скрипты AntiBlock и файлы пакета не изменяются. На реальном OpenWrt-устройстве или VM нужно дополнительно проверять штатную работу `ujail`. Пул LAN DHCP отключён, чтобы dnsmasq не проверял наличие DHCP-серверов через `udhcpc` в тестовой DNS-сети.
 
-To use a builder from another location:
+## Тестирование
 
-```sh
-OPENWRT_BUILD_SH=/path/to/openwrt-build.sh ./tests/run.sh
-```
+Тестовый набор включает **25 проверок**:
 
-Requirements: the sibling `openwrt-package-ci` checkout, Docker with a running
-daemon, standard OpenWrt build host tools and Internet access during build and
-staging. On the first run, Docker also needs access to `ghcr.io` to pull the
-OpenWrt rootfs image.
+- реальные маршруты ядра для правил L2 и L3, устаревший параметр `gateway`, перенос маршрутов и blacklist;
+- режим `--test`, журнал `--log`, статистику `--stat` и очистку маршрутов;
+- перезапуск процесса через `procd`;
+- сохранение остановленного `dnsmasq` в остановленном состоянии;
+- перезапуск работающего dnsmasq при запуске AntiBlock и очистку тёплого DNS-кеша;
+- отключённые UCI-секции маршрутов, изменение источников после UCI commit/restart;
+- `reload` сервиса с заменой активных маршрутов и обновлением только blacklist;
+- принятие конфигурации с 32 включёнными правилами;
+- пять регрессий валидации старта: нет правил; отсутствует interface/gateway; отсутствует `domains_path`; все правила выключены; одно рабочее и одно неполное правило.
 
-The runtime uses `NET_ADMIN` and `NET_RAW` for routing and packet capture,
-without `--privileged`. Host hardware watchdog devices must not be exposed.
+Init-скрипт требует хотя бы одного включённого правила с `interface` (или устаревшим `gateway`) и `domains_path`. Максимальное количество правил и прочие аргументы дополнительно валидирует бинарный файл AntiBlock.
 
-The shared builder caches its SDK under `.openwrt-build/`. Docker caches the
-official OpenWrt rootfs image locally. The latest x86/64 APK used by the E2E test
-is stored under `tests/.artifacts/`.
+## Структура проекта
+
+Общий SDK кешируется в `.openwrt-build/`, образ OpenWrt - в локальном кеше Docker. Последний собранный x86/64 APK для E2E хранится в `tests/.artifacts/`.

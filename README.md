@@ -1,20 +1,23 @@
 # AntiBlock OpenWrt package
 
-This repository contains the OpenWrt package definition for [AntiBlock](https://github.com/karen07/antiblock).
-
-It packages the AntiBlock binary together with an OpenWrt init script and UCI configuration, so the service can be installed and managed in the usual OpenWrt way. The package depends on `libcurl` and `libpcap`. AntiBlock 3.x route rules use network interface names; the init script still accepts the legacy `gateway` UCI key from 2.x configurations.
-
-When used inside an OpenWrt buildroot, the Makefile can build from `../antiblock` relative to the package directory (normally `package/antiblock`). Otherwise OpenWrt fetches the upstream tag `v$(PKG_VERSION)`.
+OpenWrt packaging for [AntiBlock](https://github.com/karen07/antiblock), a DNS-based
+dynamic routing tool. It provides the application, an init script, and UCI configuration
+for managing the service on OpenWrt.
 
 ## Описание
 
-Этот репозиторий содержит описание пакета OpenWrt для [AntiBlock](https://github.com/karen07/antiblock).
+Пакет OpenWrt для [AntiBlock](https://github.com/karen07/antiblock) - инструмента
+динамической маршрутизации на основе DNS. Он устанавливает приложение, init-скрипт и
+UCI-конфигурацию для управления сервисом на OpenWrt.
 
-Пакет устанавливает бинарный файл AntiBlock вместе со скриптом запуска OpenWrt и конфигурацией UCI, поэтому сервисом можно управлять стандартными средствами OpenWrt. Пакет зависит от `libcurl` и `libpcap`. В AntiBlock 3.x первый параметр правила `-r` - имя сетевого интерфейса. Init script использует новый UCI-параметр `interface`, но сохраняет fallback на старый `gateway`, поэтому существующий `/etc/config/antiblock` можно не переписывать сразу.
+Зависимости пакета - `libcurl` и `libpcap`. В AntiBlock 3.x первый параметр правила `-r`
+означает имя сетевого интерфейса. Init-скрипт использует новый UCI-параметр `interface`, но
+по-прежнему принимает прежний `gateway`, поэтому существующий `/etc/config/antiblock`
+необязательно менять сразу.
 
 При использовании внутри OpenWrt buildroot Makefile может брать исходники из `../antiblock` относительно каталога пакета (обычно `package/antiblock`). В обычной сборке OpenWrt загружает upstream tag `v$(PKG_VERSION)`.
 
-## Что находится в репозитории
+## Структура проекта
 
 - `antiblock/Makefile` - описание OpenWrt package;
 - `antiblock/files/etc/init.d/antiblock` - init script;
