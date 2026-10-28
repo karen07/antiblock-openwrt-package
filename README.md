@@ -1,14 +1,14 @@
-# AntiBlock OpenWrt package
+# AntiBlock OpenWrt Package
 
 OpenWrt packaging for [AntiBlock](https://github.com/karen07/antiblock), a DNS-based
 dynamic routing tool. It provides the application, an init script, and UCI configuration
 for managing the service on OpenWrt.
 
-## Описание
-
 Пакет OpenWrt для [AntiBlock](https://github.com/karen07/antiblock) - инструмента
 динамической маршрутизации на основе DNS. Он устанавливает приложение, init-скрипт и
 UCI-конфигурацию для управления сервисом на OpenWrt.
+
+## Описание
 
 Зависимости пакета - `libcurl` и `libpcap`. В AntiBlock 3.x первый параметр правила `-r`
 означает имя сетевого интерфейса. Init-скрипт использует новый UCI-параметр `interface`, но
@@ -17,15 +17,34 @@ UCI-конфигурацию для управления сервисом на O
 
 При использовании внутри OpenWrt buildroot Makefile может брать исходники из `../antiblock` относительно каталога пакета (обычно `package/antiblock`). В обычной сборке OpenWrt загружает upstream tag `v$(PKG_VERSION)`.
 
-## Структура проекта
+## Содержание
 
-- `antiblock/Makefile` - описание OpenWrt package;
-- `antiblock/files/etc/init.d/antiblock` - init script;
-- `antiblock/files/etc/config/antiblock` - UCI configuration with `interface` and legacy `gateway` compatibility;
-- `openwrt-build.env` - параметры пакета для общего CI;
-- `.github/workflows/openwrt-build.yml` - вызов общего reusable workflow;
-- `antiblock/test-version.sh` - вспомогательный тестовый скрипт;
-- `tests/` - локальные Docker E2E тесты OpenWrt package.
+- [Разработка и проверка изменений](#%D1%80%D0%B0%D0%B7%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-%D0%B8-%D0%BF%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D0%BA%D0%B0-%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D0%B9)
+- [Совместимость с AntiBlock 3.x](#%D1%81%D0%BE%D0%B2%D0%BC%D0%B5%D1%81%D1%82%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C-%D1%81-antiblock-3x)
+- [Сборка](#%D1%81%D0%B1%D0%BE%D1%80%D0%BA%D0%B0)
+- [Журнал и статистика](#%D0%B6%D1%83%D1%80%D0%BD%D0%B0%D0%BB-%D0%B8-%D1%81%D1%82%D0%B0%D1%82%D0%B8%D1%81%D1%82%D0%B8%D0%BA%D0%B0)
+- [Тестирование](#%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5)
+- [Структура проекта](#%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%82%D1%83%D1%80%D0%B0-%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0)
+- [Связанные проекты](#%D1%81%D0%B2%D1%8F%D0%B7%D0%B0%D0%BD%D0%BD%D1%8B%D0%B5-%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D1%8B)
+- [Лицензия](#%D0%BB%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D1%8F)
+
+## Разработка и проверка изменений
+
+**Основные точки изменения:**
+
+- `antiblock/Makefile` - зависимости, версия и правила установки пакета;
+- `antiblock/files/etc/init.d/antiblock` - управление сервисом OpenWrt;
+- `antiblock/files/etc/config/antiblock` - значения и имена UCI-опций;
+- `tests/run.sh` - E2E-проверки пакета;
+- `openwrt-build.env` - параметры общей CI-сборки.
+
+**Проверка изменений:** Функциональность демона изменяется в отдельном проекте `antiblock`; здесь изменяются упаковка и интеграция OpenWrt. При изменении UCI-опций согласовывайте конфиг и init-скрипт, затем запускайте тесты из `tests/` и сборку через общий `openwrt-package-ci`.
+
+**Контракт конфигурации:** для секции маршрута init-скрипт сначала читает
+`interface`, а при пустом значении использует старый ключ `gateway`.
+Удаление этого fallback нарушит совместимость конфигураций AntiBlock 2.x.
+Параметры `enabled`, `listen`, `log`, `stat`, `test` и `blacklist` следует
+сверять с полями LuCI и аргументами демона при изменении их семантики.
 
 ## Совместимость с AntiBlock 3.x
 
@@ -55,12 +74,7 @@ CI можно запустить:
 включать только на время диагностики. Файл `stat.txt` также находится в `/tmp`,
 если включён `option stat '1'`.
 
-## Связанные проекты
-
-- [antiblock](https://github.com/karen07/antiblock) - основной DNS-based routing daemon;
-- [luci-app-antiblock-openwrt-package](https://github.com/karen07/luci-app-antiblock-openwrt-package) - LuCI web interface.
-
-## Локальный OpenWrt E2E
+## Тестирование
 
 Тесты OpenWrt-пакета находятся в `tests/`, потому что они проверяют именно упаковку и
 интеграцию с OpenWrt, а не core AntiBlock.
@@ -110,3 +124,22 @@ cleanup, procd respawn и применение UCI через restart/reload, в
 Всего 25 runtime-тестов, включая 5 проверок валидации route-секций при запуске. Init script проверяет наличие хотя бы одного
 включённого правила с `interface` (или `gateway`) и `domains_path`;
 ограничение в 32 правила и дополнительные проверки выполняет AntiBlock.
+
+## Структура проекта
+
+- `antiblock/Makefile` - описание OpenWrt package;
+- `antiblock/files/etc/init.d/antiblock` - init script;
+- `antiblock/files/etc/config/antiblock` - UCI configuration with `interface` and legacy `gateway` compatibility;
+- `openwrt-build.env` - параметры пакета для общего CI;
+- `.github/workflows/openwrt-build.yml` - вызов общего reusable workflow;
+- `antiblock/test-version.sh` - вспомогательный тестовый скрипт;
+- `tests/` - локальные Docker E2E тесты OpenWrt package.
+
+## Связанные проекты
+
+- [antiblock](https://github.com/karen07/antiblock) - основной DNS-based routing daemon;
+- [luci-app-antiblock-openwrt-package](https://github.com/karen07/luci-app-antiblock-openwrt-package) - LuCI web interface.
+
+## Лицензия
+
+Проект распространяется под лицензией GNU Affero General Public License v3.0. Подробности см. в файле [LICENSE](LICENSE).
