@@ -70,7 +70,7 @@ CI можно запустить:
 - push тега OpenWrt release, например `v25.12.5` - значение тега используется как версия OpenWrt;
 - вручную через `workflow_dispatch`, указав версию OpenWrt и при необходимости фильтры target/subtarget.
 
-Этот тег задает версию OpenWrt для сборки, а не `PKG_VERSION` AntiBlock. Версия AntiBlock задается в `antiblock/Makefile`.
+Этот тег задаёт версию OpenWrt для сборки, а не `PKG_VERSION` AntiBlock. Версия AntiBlock задаётся в `antiblock/Makefile`.
 
 Параметры этого пакета хранятся в `openwrt-build.env`. Общие `openwrt-build.sh`, `openwrt-matrix.py` и логика сборки через OpenWrt SDK находятся в `openwrt-package-ci`.
 
@@ -88,7 +88,10 @@ CI можно запустить:
 ## Тестирование
 
 Тесты OpenWrt-пакета находятся в `tests/`, потому что они проверяют именно упаковку и
-интеграцию с OpenWrt, а не core AntiBlock.
+интеграцию с OpenWrt, а не core AntiBlock. Скрипт `tests/run-runtime.sh`
+готовит запуск runtime-сценария, `tests/runtime.sh` выполняет проверки
+в среде OpenWrt, `tests/openwrt-init.sh` подготавливает сервис, а
+`tests/dns-send.py` и `tests/dns-cache.py` формируют и проверяют DNS-обмен.
 
 Для локального запуска репозитории должны лежать рядом:
 
@@ -104,7 +107,7 @@ work/
 ./tests/run.sh
 ```
 
-`tests/run.sh` берет общий builder из:
+`tests/run.sh` берёт общий builder из:
 
 ```text
 ../openwrt-package-ci/openwrt-build.sh
