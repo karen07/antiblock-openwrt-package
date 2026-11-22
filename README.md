@@ -114,13 +114,21 @@ work/
 ```
 
 и, как обычный CI, временно копирует его в корень package-репозитория. После этого
-вызывается `build-target antiblock 25.12.6 x86 64 x86_64`, а путь к полученному APK
-через pipe передается в Docker runtime test.
+вызывается `build-target antiblock SNAPSHOT x86 64 x86_64` (по умолчанию),
+а путь к полученному APK передается в Docker runtime test.
 
-Runtime test использует официальный OpenWrt 25.12.6 x86/64 Docker rootfs
-`ghcr.io/openwrt/rootfs:x86_64-25.12.6`, устанавливает зависимости и только что
-собранный AntiBlock APK, а затем запускает подготовленный OpenWrt с procd/ubus во
-внутренней Docker-сети без внешнего доступа.
+`OPENWRT_VERSION` выбирает одну версию для SDK, репозиториев APK и Docker rootfs:
+
+```sh
+OPENWRT_VERSION=SNAPSHOT ./tests/run.sh
+OPENWRT_VERSION=25.12-SNAPSHOT ./tests/run.sh
+OPENWRT_VERSION=25.12.6 ./tests/run.sh
+```
+
+Runtime test использует официальный Docker rootfs соответствующей версии,
+например `ghcr.io/openwrt/rootfs:x86_64-SNAPSHOT`, устанавливает зависимости
+и только что собранный AntiBlock APK, затем запускает OpenWrt с procd/ubus
+во внутренней Docker-сети без внешнего доступа.
 
 Только для Docker E2E при подготовке образа отключается `procd` jail у `dnsmasq`:
 контейнеру недоступны необходимые операции создания namespaces. На настоящий

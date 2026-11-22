@@ -3,11 +3,16 @@ set -u
 
 ROOT_DIR=$(CDPATH='' cd "$(dirname "$0")/.." && pwd)
 TEST_DIR="$ROOT_DIR/tests"
-OPENWRT_VERSION="${OPENWRT_VERSION:-25.12.6}"
+OPENWRT_VERSION="${OPENWRT_VERSION:-SNAPSHOT}"
 ROOTFS_IMAGE="${OPENWRT_ROOTFS_IMAGE:-ghcr.io/openwrt/rootfs:x86_64-$OPENWRT_VERSION}"
 RUNTIME_IMAGE="antiblock-openwrt-runtime:$OPENWRT_VERSION-$$"
-OPENWRT_FILE_HOST="${OPENWRT_FILE_HOST:-https://mirror.berlin.freifunk.net/downloads.openwrt.org}"
-INDEX_URL="$OPENWRT_FILE_HOST/releases/$OPENWRT_VERSION/targets/x86/64/packages/packages.adb"
+DEFAULT_FILE_HOST="https://mirror.berlin.freifunk.net/downloads.openwrt.org"
+OPENWRT_FILE_HOST="${OPENWRT_FILE_HOST:-$DEFAULT_FILE_HOST}"
+case "$OPENWRT_VERSION" in
+    SNAPSHOT) OPENWRT_CHANNEL=snapshots ;;
+    *-SNAPSHOT | *) OPENWRT_CHANNEL="releases/$OPENWRT_VERSION" ;;
+esac
+INDEX_URL="$OPENWRT_FILE_HOST/$OPENWRT_CHANNEL/targets/x86/64/packages/packages.adb"
 
 NETWORK_NAME="antiblock-e2e-$$"
 NETWORK_SUBNET="172.31.77.0/24"
@@ -43,6 +48,16 @@ stage_debug() {
     docker exec "$STAGE_CONTAINER" cat /etc/resolv.conf >&2 || true
 }
 
+case "$OPENWRT_VERSION" in
+    master | MASTER | snapshot)
+        fail 'Use OPENWRT_VERSION=SNAPSHOT (not master) for the OpenWrt main branch'
+        ;;
+    *) : ;;
+esac
+printf '%s\n' "$OPENWRT_VERSION" \
+    | grep -Eq '^(SNAPSHOT|[0-9]+\.[0-9]+(-SNAPSHOT|\.[0-9]+))$' \
+    || fail "Unsupported version: $OPENWRT_VERSION (SNAPSHOT, N.N-SNAPSHOT or N.N.N)"
+
 APK=
 IFS= read -r APK || true
 [ -n "$APK" ] || fail "APK path was not received on stdin"
@@ -65,10 +80,16 @@ printf 'PREPARE OPENWRT DOCKER ROOTFS\n'
 printf 'OpenWrt: %s x86/64\n' "$OPENWRT_VERSION"
 printf '========================================\n\n'
 
-if ! docker image inspect "$ROOTFS_IMAGE" >/dev/null 2>&1; then
-    printf '[INFO] Pulling official OpenWrt Docker rootfs\n'
-    printf '       Image: %s\n' "$ROOTFS_IMAGE"
-
+# Nightly tags move; always refresh them to stay close to the SDK build.
+case "$OPENWRT_VERSION" in
+    SNAPSHOT | *-SNAPSHOT) PULL_ROOTFS=1 ;;
+    *)
+        PULL_ROOTFS=0
+        docker image inspect "$ROOTFS_IMAGE" >/dev/null 2>&1 || PULL_ROOTFS=1
+        ;;
+esac
+if [ "$PULL_ROOTFS" -eq 1 ]; then
+    printf '[INFO] Pulling official OpenWrt Docker rootfs: %s\n' "$ROOTFS_IMAGE"
     docker pull --platform linux/amd64 "$ROOTFS_IMAGE" \
         || fail "cannot pull official OpenWrt rootfs"
 else

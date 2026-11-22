@@ -60,11 +60,16 @@ work/
 ./tests/run.sh
 ```
 
-Для выбора другой версии OpenWrt:
+По умолчанию тестируется OpenWrt `SNAPSHOT` (основная ветка).
+Версию можно передать одной переменной для SDK и Docker rootfs:
 
 ```sh
+OPENWRT_VERSION=SNAPSHOT ./tests/run.sh
+OPENWRT_VERSION=25.12-SNAPSHOT ./tests/run.sh
 OPENWRT_VERSION=25.12.6 ./tests/run.sh
 ```
+
+`master` не является номером сборки: используйте `SNAPSHOT`.
 
 Для указания другого пути к общему сборщику:
 
@@ -88,7 +93,7 @@ OPENWRT_BUILD_SH=/path/to/openwrt-build.sh ./tests/run.sh
 ./openwrt-build.sh \
     build-target \
     antiblock \
-    25.12.6 \
+    SNAPSHOT \
     x86 \
     64 \
     x86_64 \
@@ -101,7 +106,9 @@ OPENWRT_BUILD_SH=/path/to/openwrt-build.sh ./tests/run.sh
 
 ### Тестовое окружение
 
-Тесты используют официальный OpenWrt 25.12.6 x86/64 Docker rootfs `ghcr.io/openwrt/rootfs:x86_64-25.12.6`: добавляют `dnsmasq`, собранный APK, загружают окружение с `procd` и `ubus` во внутренней сети Docker. После подготовки окружения доступ к внешнему Интернету ему не нужен.
+Тесты используют официальный Docker rootfs для выбранной версии OpenWrt,
+например `ghcr.io/openwrt/rootfs:x86_64-SNAPSHOT` (по умолчанию) или
+`ghcr.io/openwrt/rootfs:x86_64-25.12.6`: добавляют `dnsmasq`, собранный APK, загружают окружение с `procd` и `ubus` во внутренней сети Docker. После подготовки окружения доступ к внешнему Интернету ему не нужен.
 
 В копии `/etc/init.d/dnsmasq` **внутри тестового контейнера** выключаются вызовы `procd_add_jail*`: стандартный OpenWrt `ujail` требует namespace-операций, недоступных в этом непривилегированном Docker-окружении. Без обхода dnsmasq выдаёт `jail: failed to clone/fork: Operation not permitted`.
 
@@ -125,7 +132,10 @@ Init-скрипт требует хотя бы одного включённог
 
 ## Структура проекта
 
-Общий SDK кешируется в `.openwrt-build/`, образ OpenWrt - в локальном кеше Docker. Последний собранный x86/64 APK для E2E хранится в `tests/.artifacts/`.
+Общий SDK кешируется в `.openwrt-build/`, образ OpenWrt - в локальном кеше Docker.
+Для движущихся Snapshot-тегов rootfs каждый раз обновляется через `docker pull`.
+Индекс пакетов проверяется по `snapshots/targets/` для `SNAPSHOT` и
+`releases/<версия>/targets/` для релизов и `25.12-SNAPSHOT`. Последний собранный x86/64 APK для E2E хранится в `tests/.artifacts/`.
 
 ## Лицензия
 

@@ -8,7 +8,8 @@ PARENT_DIR=$(dirname "$ROOT_DIR")
 DEFAULT_BUILD_SH="$PARENT_DIR/openwrt-package-ci/openwrt-build.sh"
 BUILD_SH="${OPENWRT_BUILD_SH:-$DEFAULT_BUILD_SH}"
 LOCAL_BUILD_SH="$ROOT_DIR/.openwrt-build-e2e.sh"
-OPENWRT_VERSION="${OPENWRT_VERSION:-25.12.6}"
+OPENWRT_VERSION="${OPENWRT_VERSION:-SNAPSHOT}"
+export OPENWRT_VERSION
 
 cleanup() {
     rm -f "$LOCAL_BUILD_SH"
@@ -19,6 +20,16 @@ fail() {
     printf '\n[FAIL] %s\n' "$*" >&2
     exit 1
 }
+
+case "$OPENWRT_VERSION" in
+    master | MASTER | snapshot)
+        fail 'Use OPENWRT_VERSION=SNAPSHOT (not master) for the OpenWrt main branch'
+        ;;
+    *) : ;;
+esac
+printf '%s\n' "$OPENWRT_VERSION" \
+    | grep -Eq '^(SNAPSHOT|[0-9]+\.[0-9]+(-SNAPSHOT|\.[0-9]+))$' \
+    || fail "Unsupported version: $OPENWRT_VERSION (SNAPSHOT, N.N-SNAPSHOT or N.N.N)"
 
 [ -f "$ROOT_DIR/antiblock/Makefile" ] \
     || fail "run this test from the antiblock-openwrt-package repository"
